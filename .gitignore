@@ -132,3 +132,6 @@ helpers/country_images
 helpers/country_images_svg
 .DS_Store
 
+#photos
+*.svg
+*.png
