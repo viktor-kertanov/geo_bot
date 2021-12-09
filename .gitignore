@@ -135,3 +135,6 @@ helpers/country_images_svg
 #photos
 *.svg
 *.png
+
+#gitattributes
+.gitattributes
