@@ -5,13 +5,13 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 from helpers.db_interface import select_db_country_titles, country_title_get_db_row
 
-PROXY = {
-    'proxy_url': 'socks5://t1.learn.python.ru:1080',
-    'urllib3_proxy_kwargs': {
-        'username': 'learn',
-        'password': 'python'
-    }
-}
+# PROXY = {
+#     'proxy_url': 'socks5://t1.learn.python.ru:1080',
+#     'urllib3_proxy_kwargs': {
+#         'username': 'learn',
+#         'password': 'python'
+#     }
+# }
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
@@ -94,13 +94,36 @@ def help_command(update: Update, context: CallbackContext) -> None:
     update.message.reply_text("Use /start *to test* this bot", parse_mode="HTML")
 
 
+def endless_messaging_start(update: Update, context: CallbackContext):
+    '''ловим команду /talk и передаем в  callback_data ключевое слово, на которое будет реагировать функция ниже'''
+    kb = InlineKeyboardMarkup([[InlineKeyboardButton(text='Жми на кнопку', callback_data='call')]])
+    update.message.reply_text(text='хоба', reply_markup=kb)
+
+
+def endless_messaging(update: Update, context: CallbackContext):
+    '''поймали сообщение, потому что в нем было ключевое слово call. его мы прописали, когда регистрировали хендлер
+    вот тут updater.dispatcher.add_handler(CallbackQueryHandler(endless_messaging, pattern='call'))
+    '''
+    print('вошли в endless_messaging')
+    country = random.choice(list(select_db_country_titles()))  # и опять передали в call в callback_data, чтобы опять среагировать
+    kb = InlineKeyboardMarkup([[InlineKeyboardButton(text='push me', callback_data='call')]])
+    query = update.callback_query
+    query.answer(cache_time=0.5)
+    query.message.reply_text(text=f'Рандомная страна: {country}', reply_markup=kb)
+
+
+
+
 def main() -> None:
     config = load()
-    updater = Updater(config.api_token, request_kwargs=PROXY, use_context=True)
-
+    updater = Updater(config.api_token,  use_context=True) # request_kwargs=PROXY,
+#    updater.dispatcher.add_handler(CallbackQueryHandler(start, pattern=''))
     updater.dispatcher.add_handler(CommandHandler('start', start))
-    updater.dispatcher.add_handler(CallbackQueryHandler(button))
     updater.dispatcher.add_handler(CommandHandler('help', help_command))
+    updater.dispatcher.add_handler(CommandHandler('talk', endless_messaging_start))
+    updater.dispatcher.add_handler(CallbackQueryHandler(endless_messaging, pattern='call'))
+    # updater.dispatcher.add_handler(CallbackQueryHandler(button))
+
 
     updater.start_polling()
     updater.idle()
