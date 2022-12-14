@@ -1,23 +1,10 @@
-from config import load
+from config import PROXY, logging, API_TOKEN
 import random
 import logging
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import ephem
 import requests
 from bs4 import BeautifulSoup as bs
-
-logging.basicConfig(format='%(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO,
-                    filename='bot.log')
-
-
-PROXY = {
-    'proxy_url': 'socks5://t1.learn.python.ru:1080',
-    'urllib3_proxy_kwargs': {
-        'username': 'learn',
-        'password': 'python'
-    }
-}
 
 
 def greet_user(update, context):
@@ -32,7 +19,6 @@ def greet_user(update, context):
     final_reply = replies[random_int]
 
     update.message.reply_text(final_reply)
-
 
 
 def planets(update, context):
@@ -104,8 +90,7 @@ def city_play(update, context, city_db = city_db_ext):
 
 
 def main():
-    config = load()
-    mybot = Updater(config.api_token, request_kwargs=PROXY, use_context=True)
+    mybot = Updater(API_TOKEN, request_kwargs=PROXY, use_context=True)
     dp = mybot.dispatcher
     dp.add_handler(CommandHandler("start", greet_user))
     dp.add_handler(CommandHandler("city", city_play, pass_args=True))

@@ -127,6 +127,7 @@ dmypy.json
 
 #secretpy
 secret.py
+config.py
 
 helpers/country_images
 helpers/country_images_svg
