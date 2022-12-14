@@ -1,8 +1,6 @@
 from helpers.db_connection import DatabaseCursor
 from typing import Type, Set, List, Dict
-
-GEO_DB = "/Users/viktorkertanov/projects/geo_bot/geo.db"
-
+from config import GEO_DB
 
 def create_countries_tb() -> None:
     with DatabaseCursor(GEO_DB) as cursor:

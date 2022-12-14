@@ -127,10 +127,10 @@ dmypy.json
 
 #secretpy
 secret.py
-config.py
 
-helpers/country_images
-helpers/country_images_svg
+data/country_images
+data/country_images_svg
+
 .DS_Store
 
 #photos
@@ -139,3 +139,8 @@ helpers/country_images_svg
 
 #gitattributes
 .gitattributes
+
+config.py
+
+#db, sqlite
+*.db
