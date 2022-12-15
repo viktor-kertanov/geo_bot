@@ -3,7 +3,7 @@ import random
 import logging
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
-from helpers.db_interface import select_db_country_titles, country_title_get_db_row
+from db_handlers.db_interface import select_db_country_titles, country_title_get_db_row
 
 PROXY = {
     'proxy_url': 'socks5://t1.learn.python.ru:1080',

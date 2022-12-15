@@ -1,4 +1,4 @@
-from helpers.db_connection import DatabaseCursor
+from db_handlers.db_connection import DatabaseCursor
 from typing import Type, Set, List, Dict
 from config import GEO_DB
 

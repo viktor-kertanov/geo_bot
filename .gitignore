@@ -144,3 +144,7 @@ config.py
 
 #db, sqlite
 *.db
+
+*.log
+
+.vscode/
