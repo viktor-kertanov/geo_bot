@@ -1,6 +1,8 @@
 from config import logging
 from emoji import emojize
-from learn_bot.handlers import greet_user, guess_number_handler, send_flag_picture, user_coordinates, talk_to_me
+from learn_bot.handlers import\
+    greet_user, guess_number_handler, send_flag_picture,\
+    user_coordinates, talk_to_me, check_user_photo
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from config import API_TOKEN
 
@@ -14,6 +16,7 @@ def main():
     dp.add_handler(CommandHandler("guess", guess_number_handler))
     dp.add_handler(CommandHandler("flag", send_flag_picture))
     dp.add_handler(MessageHandler(Filters.regex("^(Прислать флаг)$"), send_flag_picture))
+    dp.add_handler(MessageHandler(Filters.photo, check_user_photo))
     dp.add_handler(MessageHandler(Filters.location, user_coordinates))
     dp.add_handler(MessageHandler(Filters.text, talk_to_me))
     logging.info('Бот стартовал')

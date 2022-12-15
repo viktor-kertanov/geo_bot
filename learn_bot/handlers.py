@@ -66,6 +66,19 @@ def user_coordinates(update, context):
     update.message.reply_text(f"Ваши координаты:\n{coords} {context.user_data['emoji']}")
     print(coords)
 
+def check_user_photo(update, context):
+    context.user_data['emoji'] = user_emoji(context.user_data)
+    update.message.reply_text('Обрабатываем фото')
+    os.makedirs('learn_bot/downloads', exist_ok=True )
+    print(update.message.photo)
+    print(update.message.photo[-1])
+    file_id = update.message.photo[-1].file_id
+    photo_file = context.bot.getFile(file_id)
+    filename = join('learn_bot/downloads', f'{file_id}.jpeg')
+    photo_file.download(filename)
+    update.message.reply_text(f"Мы сохранили ваше фото, ура! {context.user_data['emoji']}")
+
+
 if __name__ == '__main__':
 
     print('Helo Bot!')
