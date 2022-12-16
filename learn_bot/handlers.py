@@ -1,7 +1,8 @@
 from config import logging
 from learn_bot.bot_keyboard import main_keyboard
-from learn_bot.emoji_handler import user_emoji
+from learn_bot.emoji_handler import user_emoji, emoji_by_string
 from learn_bot.guess_game import guess_number_game
+from learn_bot.clarifai_handler import object_exists_on_img, clarifai_processor, what_is_on_picture
 import os
 from os.path import isfile, join
 from random import randint, choice
@@ -66,17 +67,42 @@ def user_coordinates(update, context):
     update.message.reply_text(f"Ваши координаты:\n{coords} {context.user_data['emoji']}")
     print(coords)
 
-def check_user_photo(update, context):
+def check_user_photo(update, context, default_object='cat'):
+    confidence = 0.9
+    caption = update.message.caption.strip().lower().split()[0]
+    if caption:
+        object = caption
+    else:
+        object=default_object
+
     context.user_data['emoji'] = user_emoji(context.user_data)
-    update.message.reply_text('Обрабатываем фото')
+    update.message.reply_text('Обрабатываем фото 🌈')
     os.makedirs('learn_bot/downloads', exist_ok=True )
-    print(update.message.photo)
     print(update.message.photo[-1])
     file_id = update.message.photo[-1].file_id
     photo_file = context.bot.getFile(file_id)
     filename = join('learn_bot/downloads', f'{file_id}.jpeg')
     photo_file.download(filename)
-    update.message.reply_text(f"Мы сохранили ваше фото, ура! {context.user_data['emoji']}")
+    
+    ai_response = clarifai_processor(filename)
+    what_on_img = what_is_on_picture(ai_response, min_confidence=confidence)
+    what_on_img = [el.name for el in what_on_img]
+    object_exists = object_exists_on_img(ai_response, object, min_confidence=confidence)
+    
+    if object_exists:
+        emoji = emoji_by_string(object)
+        update.message.reply_text(f'Ура! На фото найден объект "{object}" {emoji}')
+        object_folder = f'learn_bot/images/{object}_imgs'
+        os.makedirs(object_folder, exist_ok=True)
+        new_filename = join(object_folder, f"{object}_{file_id}.jpeg")
+        os.rename(filename, new_filename)
+        update.message.reply_text(f'📸 Мы сохранили фото для будущего использования 🎉 🥹 📸')
+    else:
+        update.message.reply_text(
+            f'К сожалению, мы не нашли объект {object} на фото. \
+                Мы нашли только следующие объекты (уверенность AI >= {confidence: .1%}): {", ".join(what_on_img)}'
+        )
+        os.remove(filename)
 
 
 if __name__ == '__main__':

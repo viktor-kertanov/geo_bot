@@ -11,7 +11,7 @@ __pycache__/
 build/
 develop-eggs/
 dist/
-downloads/
+downloads/*
 eggs/
 .eggs/
 lib/
@@ -130,7 +130,7 @@ secret.py
 
 data/country_images
 data/country_images_svg
-
+learn_bot/images/*
 .DS_Store
 
 #photos

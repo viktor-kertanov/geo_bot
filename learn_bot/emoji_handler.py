@@ -8,6 +8,12 @@ def random_emoji():
 
     return emoji
 
+def emoji_by_string(my_string):
+    emoji = emojize(f":{my_string.lower().strip()}:", language='alias')
+    if emoji == f":{my_string}:":
+        return ""
+    return emoji
+
 def user_emoji(user_data):
     if 'emoji' not in user_data:
         return random_emoji()
@@ -16,5 +22,6 @@ def user_emoji(user_data):
 
 
 if __name__ == '__main__':
-
+    a = emoji_by_string('dog')
+    print(a)
     print('Helo Bot!')
