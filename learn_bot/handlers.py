@@ -1,4 +1,5 @@
 from config import logging
+from db_handlers.mongo_db import mongo_db, get_or_create_user
 from learn_bot.bot_keyboard import main_keyboard
 from learn_bot.emoji_handler import user_emoji, emoji_by_string
 from learn_bot.guess_game import guess_number_game
@@ -8,15 +9,15 @@ from os.path import isfile, join
 from random import randint, choice
 
 def greet_user(update, context):
-    print('Вызван /start, vk')
-    
-    context.user_data['emoji'] = user_emoji(context.user_data)
+    user = get_or_create_user(mongo_db,  update.effective_user, update.message.chat. id)
+    print('Вызван /start, vk') 
     update.message.reply_text(
-        f"Привет! {context.user_data['emoji']}",
+        f"Привет! {user['emoji']}",
         reply_markup=main_keyboard()
         )
 
 def guess_number_handler(update, context):
+    user = get_or_create_user(mongo_db,  update.effective_user, update.message.chat. id)
     usr_msg = update.message.text
     print(f'user message is: {usr_msg}')
 
@@ -33,6 +34,7 @@ def guess_number_handler(update, context):
         update.message.reply_text(error_msg)
 
 def send_flag_picture(update, context):
+    user = get_or_create_user(mongo_db,  update.effective_user, update.message.chat. id)
     flags_dir = "data/country_images/"
     flags = [
         f'{flags_dir}{f}' for f in os.listdir(flags_dir) 
@@ -49,11 +51,11 @@ def send_flag_picture(update, context):
     return flags
 
 def talk_to_me(update, context):
+    user = get_or_create_user(mongo_db,  update.effective_user, update.message.chat. id)
     text_to_repeat = update.message.text
 
-    context.user_data['emoji'] = user_emoji(context.user_data)
     update.message.reply_text(
-        f"{text_to_repeat}{context.user_data['emoji']}",
+        f"{text_to_repeat}{user['emoji']}",
         reply_markup=main_keyboard())
 
     internal_msg = f'We have just echoed: "{text_to_repeat}"'
@@ -62,12 +64,13 @@ def talk_to_me(update, context):
     return None
 
 def user_coordinates(update, context):
-    context.user_data['emoji'] = user_emoji(context.user_data)
+    user = get_or_create_user(mongo_db,  update.effective_user, update.message.chat. id)
     coords = update.message.location
-    update.message.reply_text(f"Ваши координаты:\n{coords} {context.user_data['emoji']}")
+    update.message.reply_text(f"Ваши координаты:\n{coords} {user['emoji']}")
     print(coords)
 
 def check_user_photo(update, context, default_object='cat'):
+    user = get_or_create_user(mongo_db,  update.effective_user, update.message.chat. id)
     confidence = 0.9
     caption = update.message.caption.strip().lower().split()[0]
     if caption:
@@ -75,7 +78,6 @@ def check_user_photo(update, context, default_object='cat'):
     else:
         object=default_object
 
-    context.user_data['emoji'] = user_emoji(context.user_data)
     update.message.reply_text('Обрабатываем фото 🌈')
     os.makedirs('learn_bot/downloads', exist_ok=True )
     print(update.message.photo[-1])
