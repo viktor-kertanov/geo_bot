@@ -1,5 +1,5 @@
 from config import logging
-from db_handlers.mongo_db import mongo_db, get_or_create_user
+from db_handlers.mongo_db import mongo_db, get_or_create_user, subscribe_user, unsubscribe_user
 from learn_bot.bot_keyboard import main_keyboard
 from learn_bot.emoji_handler import emoji_by_string
 from learn_bot.guess_game import guess_number_game
@@ -135,6 +135,22 @@ def check_user_photo(update, context, default_object='cat'):
                  {", ".join(what_on_img)}'
         )
         os.remove(filename)
+
+
+def subscribe_user_handler(update, context):
+    user = get_or_create_user(
+        mongo_db,  update.effective_user, update.message.chat.id
+    )
+    subscribe_user(mongo_db, user)
+    update.message.reply_text('Вы успешно подписались! ⚓️')
+
+
+def unsubscribe_user_handler(update, context):
+    user = get_or_create_user(
+        mongo_db,  update.effective_user, update.message.chat.id
+    )
+    unsubscribe_user(mongo_db, user)
+    update.message.reply_text('Вы успешно отписались! 🫠')
 
 
 if __name__ == '__main__':

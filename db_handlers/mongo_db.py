@@ -39,3 +39,22 @@ def save_anketa(db, user_id: int, anketa_data: dict):
             {'$push':
                 {'anketa': anketa_data}}
         )
+
+
+def subscribe_user(db, user_data):
+    if not user_data.get('subscribed'):
+        db.users.update_one(
+            {'_id': user_data['_id']},
+            {'$set': {'subscribed': True}}
+        )
+
+
+def unsubscribe_user(db, user_data):
+    db.users.update_one(
+        {'_id': user_data['_id']},
+        {'$set': {'subscribed': False}}
+    )
+
+
+def get_subsribed_users(db):
+    return db.users.find({'subscribed': True})
