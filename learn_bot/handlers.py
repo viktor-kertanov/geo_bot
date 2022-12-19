@@ -6,7 +6,7 @@ from db_handlers.mongo_db import mongo_db, get_or_create_user,\
                                  get_flag_img_rating
 from learn_bot.bot_keyboard import main_keyboard, img_rating_inline_keyboard
 from learn_bot.emoji_handler import emoji_by_string
-from learn_bot.guess_game import guess_number_game
+from learn_bot.guess_game import guess_number_game, get_bot_number
 from learn_bot.clarifai_handler import (object_exists_on_img,
                                         clarifai_processor, what_is_on_picture)
 from learn_bot.bot_jobs import vk_alram
@@ -37,7 +37,9 @@ def guess_number_handler(update, context):
         user_number = usr_msg.split(' ')[-1]
         user_number = int(user_number)
         print(f'user number is {user_number}.')
-        update.message.reply_text(guess_number_game(user_number))
+        bot_number = get_bot_number(user_number, random_interval=10)
+        print(f'bot number is {bot_number}.')
+        update.message.reply_text(guess_number_game(user_number, bot_number))
 
     except (TypeError, ValueError) as e:
         error_msg = 'Вы не умеете играть в эту игру.\

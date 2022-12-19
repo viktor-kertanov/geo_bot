@@ -17,6 +17,7 @@ grpcio==1.51.1
 idna==3.4
 iniconfig==1.1.1
 mccabe==0.7.0
+mongomock==4.1.2
 packaging==22.0
 Pillow==9.3.0
 pluggy==1.0.0
@@ -26,10 +27,13 @@ pyflakes==3.0.1
 pymongo==4.3.3
 PySocks==1.7.1
 pytest==7.2.0
+pytest-mongodb==2.2.0
 python-telegram-bot==13.15
 pytz==2022.6
 pytz-deprecation-shim==0.1.0.post0
+PyYAML==6.0
 requests==2.28.1
+sentinels==1.0.0
 six==1.16.0
 soupsieve==2.3.2.post1
 tomli==2.0.1

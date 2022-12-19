@@ -1,0 +1,101 @@
+[{
+  "_id": {
+    "$oid": "63a01e1f0d24a0b0d1d2fd34"
+  },
+  "image_name": "data/country_images/niger_flag.jpeg",
+  "votes": [
+    {
+      "user_id": 1670826778,
+      "vote": 1
+    }
+  ]
+},{
+  "_id": {
+    "$oid": "63a01e490d24a0b0d1d2fd35"
+  },
+  "image_name": "data/country_images/lebanon_flag.jpeg",
+  "votes": [
+    {
+      "user_id": 1670826778,
+      "vote": -1
+    }
+  ]
+},{
+  "_id": {
+    "$oid": "63a0211812d16d4eabef62e8"
+  },
+  "image_name": "data/country_images_aux/niger_flag.jpeg",
+  "votes": [
+    {
+      "user_id": 1670826778,
+      "vote": 1
+    },
+    {
+      "user_id": 1670826777,
+      "vote": 1
+    }
+  ]
+},{
+  "_id": {
+    "$oid": "63a0214012d16d4eabef62e9"
+  },
+  "image_name": "data/country_images_aux/andorra_flag.jpeg",
+  "votes": [
+    {
+      "user_id": 1670826778,
+      "vote": 1
+    },
+    {
+      "user_id": 1670826779,
+      "vote": 1
+    },
+    {
+      "user_id": 1670826777,
+      "vote": 1
+    }
+  ]
+},{
+  "_id": {
+    "$oid": "63a02652463f303d6d3d8219"
+  },
+  "image_name": "data/country_images_aux/lebanon_flag.jpeg",
+  "votes": [
+    {
+      "user_id": 1670826777,
+      "vote": 1
+    }
+  ]
+},{
+  "_id": {
+    "$oid": "63a02659463f303d6d3d821a"
+  },
+  "image_name": "data/country_images_aux/afghanistan_flag.jpeg",
+  "votes": [
+    {
+      "user_id": 1670826777,
+      "vote": 1
+    }
+  ]
+},{
+  "_id": {
+    "$oid": "63a0265a463f303d6d3d821b"
+  },
+  "image_name": "data/country_images_aux/абхазия_flag.jpeg",
+  "votes": [
+    {
+      "user_id": 1670826777,
+      "vote": -1
+    }
+  ]
+},{
+  "_id": {
+    "$oid": "63a02c98968fc8b304188718"
+  },
+  "image_name": "data/country_images_aux/albania_flag.jpeg",
+  "votes": [
+    {
+      "user_id": 1670826777,
+      "vote": 1
+    }
+  ]
+}]
