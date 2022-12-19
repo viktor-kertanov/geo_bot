@@ -1,8 +1,10 @@
 from random import randint
 
+def get_bot_number(user_number: int, random_interval: int=10) -> int:
+    return randint(user_number-random_interval, user_number+random_interval+1)
 
 def guess_number_game(user_number: int) -> str:
-    guess = randint(user_number-10, user_number+11)
+    guess = get_bot_number(user_number, random_interval=10)
 
     print(f'Our guess is {guess}')
 

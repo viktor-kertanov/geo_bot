@@ -58,3 +58,55 @@ def unsubscribe_user(db, user_data):
 
 def get_subsribed_users(db):
     return db.users.find({'subscribed': True})
+
+
+def save_flag_img_vote(db, user_data, image_name, vote):
+    image = db.images.find_one({"image_name": image_name})
+    if not image:
+        image = {
+            "image_name": image_name,
+            "votes": [{"user_id": user_data["user_id"], "vote": vote}]
+        }
+        db.images.insert_one(image)
+    elif not user_voted(db, image_name, user_data["user_id"]):
+        db.images.update_one(
+            {"image_name": image_name},
+            {"$push": {
+                "votes": {"user_id": user_data["user_id"], "vote": vote}
+            }}
+        )
+
+
+def user_voted(db, image_name, user_id):
+    if db.images.find_one(
+        {"image_name": image_name, "votes.user_id": user_id}
+    ):
+        return True
+    return False
+
+
+def get_flag_img_rating(db, image_name):
+    rating_cur = db.images.aggregate(
+        [
+            {
+                '$match': {
+                    'image_name': image_name
+                }
+            }, {
+                '$unwind': {
+                    'path': '$votes'
+                }
+            }, {
+                '$group': {
+                    '_id': '$image_name',
+                    'rating': {
+                        '$sum': '$votes.vote'
+                    }
+                }}
+        ]
+    )
+    rating = next(rating_cur, None)
+
+    if rating:
+        return rating['rating']
+    return 0

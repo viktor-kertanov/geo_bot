@@ -1,10 +1,15 @@
 from config import logging
-from db_handlers.mongo_db import mongo_db, get_or_create_user, subscribe_user, unsubscribe_user
-from learn_bot.bot_keyboard import main_keyboard
+from datetime import datetime
+from db_handlers.mongo_db import mongo_db, get_or_create_user,\
+                                 subscribe_user, unsubscribe_user,\
+                                 save_flag_img_vote, user_voted,\
+                                 get_flag_img_rating
+from learn_bot.bot_keyboard import main_keyboard, img_rating_inline_keyboard
 from learn_bot.emoji_handler import emoji_by_string
 from learn_bot.guess_game import guess_number_game
 from learn_bot.clarifai_handler import (object_exists_on_img,
                                         clarifai_processor, what_is_on_picture)
+from learn_bot.bot_jobs import vk_alram
 import os
 from os.path import isfile, join
 from random import choice
@@ -43,22 +48,32 @@ def guess_number_handler(update, context):
 
 
 def send_flag_picture(update, context):
-    get_or_create_user(
+    user = get_or_create_user(
         mongo_db, update.effective_user, update.message.chat.id
     )
-    flags_dir = "data/country_images/"
+    flags_dir = "data/country_images_aux/"
     flags = [
         f'{flags_dir}{f}' for f in os.listdir(flags_dir)
         if isfile(join(flags_dir, f)) and 'flag' in f and '.jpeg' in f
     ]
     flag_to_send = choice(flags)
     country = flag_to_send.split('/')[-1].split('_')[0].capitalize()
-
     usr_chat_id = update.effective_chat.id
+
+    rating = get_flag_img_rating(mongo_db, flag_to_send)
+
+    if user_voted(mongo_db, flag_to_send, user['user_id']):
+        keyboard = None
+        flag_caption = f"Рейтинг картинки {country}: {rating} 🧛🏻‍♂️"
+    else:
+        keyboard = img_rating_inline_keyboard(flag_to_send)
+        flag_caption = None
+
     context.bot.send_photo(
         chat_id=usr_chat_id,
-        caption=country,
-        photo=open(flag_to_send, 'rb')
+        photo=open(flag_to_send, 'rb'),
+        reply_markup=keyboard,
+        caption=flag_caption
     )
 
     return flags
@@ -151,6 +166,36 @@ def unsubscribe_user_handler(update, context):
     )
     unsubscribe_user(mongo_db, user)
     update.message.reply_text('Вы успешно отписались! 🫠')
+
+
+def set_alarm(update, context):
+    try:
+        alarm_seconds = abs(int(context.args[0]))
+        context.job_queue.run_once(
+            vk_alram,
+            alarm_seconds,
+            context=update.message.chat.id
+        )
+        update.message.reply_text(
+            f'Уведомление через {alarm_seconds} секунд ⏱.\
+              {datetime.now().strftime("%H:%M:%S")}'
+        )
+    except (TypeError, ValueError):
+        update.message.reply_text("Введите целое число секунд после команды.")
+
+
+def flag_picture_rating(update, context):
+    user = get_or_create_user(
+        mongo_db,  update.effective_user, update.effective_chat.id
+    )
+    update.callback_query.answer()
+    callback_type, image_name, vote = update.callback_query.data.split('|')
+    vote = int(vote)
+    save_flag_img_vote(mongo_db, user, image_name, vote)
+
+    rating = get_flag_img_rating(mongo_db, image_name)
+    text = f"Спасибо!🫦\nРейтинг картинки: ß{rating}"
+    update.callback_query.edit_message_caption(caption=text)
 
 
 if __name__ == '__main__':

@@ -129,6 +129,7 @@ dmypy.json
 secret.py
 
 data/country_images
+data/country_images_aux
 data/country_images_svg
 learn_bot/images/*
 .DS_Store

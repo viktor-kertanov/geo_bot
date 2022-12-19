@@ -28,3 +28,10 @@ def send_updates_aux(context):
             text='Задание выполнено'
         )
         context.job.schedule_removal()
+
+
+def vk_alram(context):
+    context.bot.send_message(
+        chat_id=context.job.context,
+        text=f'Сработал будильник ⏰. {datetime.now().strftime("%H:%M:%S")}'
+    )

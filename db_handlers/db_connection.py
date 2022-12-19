@@ -1,9 +1,12 @@
 import sqlite3
 
+
 class DatabaseCursor:
     """
-    Creating a context manager for a database in order to make it more stable -- commit when there's no
-    exceptions; close connection when there's an exception in order not to leave an open connections.
+    Creating a context manager for a database in order to make it more stable
+    -- commit when there's no exceptions;
+    close connection when there's an exception
+    in order not to leave an open connections.
     """
     def __init__(self, host):
         self.connection = None
