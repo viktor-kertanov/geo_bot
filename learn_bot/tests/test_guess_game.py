@@ -31,3 +31,4 @@ def test_guess_number_draw():
     bot_number = 10
     msg = 'Ничья! Мы оба загадали число 10🥹'
     assert msg == guess_number_game(user_number, bot_number)
+ 

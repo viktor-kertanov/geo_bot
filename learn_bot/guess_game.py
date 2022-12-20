@@ -2,7 +2,7 @@ from random import randint
 
 
 def get_bot_number(user_number: int, random_interval: int = 10) -> int:
-    return randint(user_number-random_interval, user_number+random_interval+1)
+    return randint(user_number-random_interval, user_number+random_interval)
 
 
 def guess_number_game(user_number: int, bot_number: int) -> str:

@@ -88,7 +88,7 @@ def talk_to_me(update, context):
     text_to_repeat = update.message.text
 
     update.message.reply_text(
-        f"{text_to_repeat}{user['emoji']}",
+        f"{text_to_repeat} {user['emoji']}",
         reply_markup=main_keyboard())
 
     internal_msg = f'We have just echoed: "{text_to_repeat}"'
