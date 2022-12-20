@@ -2,7 +2,7 @@ from datetime import datetime
 from unittest.mock import Mock
 
 import pytest
-from telegram import Bot, Chat,  Message, Update , User
+from telegram import Bot, Chat,  Message, Update, User
 from telegram.ext import Updater
 from telegram.ext.callbackcontext import CallbackContext
 
@@ -30,10 +30,10 @@ def make_message(text, user, bot):
         from_user=user,
         date=datetime.now(),
         chat=Chat(id=1, type='private'),
-        text=text, 
+        text=text,
         bot=bot
     )
-    
+
     message.reply_text = Mock(return_value=None)
 
     return message
