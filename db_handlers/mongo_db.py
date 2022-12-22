@@ -1,9 +1,9 @@
 from pymongo import MongoClient
-from config import MONGLO_LINK, MONGO_LEARN_BOT_DB
+from config import MONGO_LEARN_BOT, MONGO_LEARN_BOT_DB
 from learn_bot.emoji_handler import random_emoji
 from datetime import datetime
 
-mongo_db_client = MongoClient(MONGLO_LINK)
+mongo_db_client = MongoClient(MONGO_LEARN_BOT)
 mongo_db = mongo_db_client[MONGO_LEARN_BOT_DB]
 
 
