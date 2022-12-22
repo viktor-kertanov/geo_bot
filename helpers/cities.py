@@ -1,10 +1,5 @@
 import requests
 from bs4 import BeautifulSoup
-from random import randint
-from time import sleep
-import os
-import base64
-
 
 
 class BiggestCity:
@@ -17,22 +12,33 @@ class BiggestCity:
 
     @property
     def city_image_small(self):
-        return self.city_html.find_all("td")[1].select_one("img").get("srcset").split()[2].replace('//', 'https://')
+        return self.city_html.find_all("td")[1].\
+               select_one("img").get("srcset").split()[2].\
+               replace('//', 'https://')
 
     @property
     def country_title(self):
-        return self.city_html.select_one("span.nowrap span.nowrap").get("data-sort-value")
+        return self.city_html.\
+               select_one("span.nowrap span.nowrap").get("data-sort-value")
 
     @property
     def country_flag(self):
-        return self.city_html.select_one("span.flagicon img.thumbborder").get("srcset").split()[2].replace('//', 'https://')
+        return self.city_html.\
+               select_one("span.flagicon img.thumbborder").\
+               get("srcset").split()[2].replace('//', 'https://')
 
     @property
     def city_image(self):
-        city_image_url = f"""https://ru.wikipedia.org{self.city_html.find_all("td")[1].select_one("td a").get("href")}"""
+        city_img = self.city_html.find_all("td")[1].\
+                    select_one("td a").get("href")
+        city_image_url = f"""https://ru.wikipedia.org{city_img}"""
+
         city_image_content = requests.get(city_image_url).content
         image_soup = BeautifulSoup(city_image_content, "html.parser")
-        city_image = f"""https:{image_soup.select_one("div.fullImageLink a").get("href")}"""
+
+        full_img_link = image_soup.select_one("div.fullImageLink a").\
+            get("href")
+        city_image = f"""https:{full_img_link}"""
         return city_image
 
 
