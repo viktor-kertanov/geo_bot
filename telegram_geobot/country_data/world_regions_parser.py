@@ -8,12 +8,12 @@ from bs4 import BeautifulSoup
 REGION_SOURCE_URL = "https://unstats.un.org/unsd/methodology/m49/"
 
 LANGUAGE_LOCATORS = {
-    # 'english': 'ENG_GEO',
-    'russian': 'RUS_GEO',
-    # 'french': 'FRA_GEO',
-    # 'spanish': 'ESP_GEO',
-    # 'arabic': 'ARB_GEO',
-    # 'chinese': 'CHN_GEO'
+    'english': 'GeoGroupsENG',
+    'russian': 'GeoGroupsRUS',
+    'french': 'GeoGroupsFRA',
+    'spanish': 'GeoGroupsESP',
+    'arabic': 'GeoGroupsARB',
+    'chinese': 'GeoGroupsCHN'
 }
 
 def region_parser(language_locator: str) -> list[dict]:
@@ -25,9 +25,7 @@ def region_parser(language_locator: str) -> list[dict]:
     # 1) geo regions (what we need)
     # 2) recent changes etc
 
-    region_data = soup.select('.tab-v1 .tab-content', {'id': 'ESP_COUNTRIES'})
-    country_data = soup.select('.tab-pane')
-
+    country_data = soup.select_one(f'table#{language_locator}')
     rows = country_data.select('tr')[1:]
 
     region_data = {}
@@ -68,11 +66,10 @@ def all_language_region_data() -> dict:
     '''function that collects the info about region in different languages to store furthe in mongo db'''
     all_lang_data = {}
     for lang in LANGUAGE_LOCATORS:
-        lang_data = region_parser(lang)
+        lang_data = region_parser(LANGUAGE_LOCATORS[lang])
         all_lang_data[lang] = lang_data
     
     return all_lang_data
 if __name__ == '__main__':
-    # region_data = all_language_region_data()
-    ru_data = region_parser('GeoGroupsRUS')
+    all_region_data = all_language_region_data()
     print('hello world!')
