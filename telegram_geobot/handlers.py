@@ -1,4 +1,4 @@
-from db_handlers.geobot_mongodb import mongo_db, get_or_create_user
+from telegram_geobot.db_handlers.geobot_mongodb import mongo_db, get_or_create_user
 from telegram import ParseMode
 from telegram_geobot.keyboard import flag_keyboard
 import os

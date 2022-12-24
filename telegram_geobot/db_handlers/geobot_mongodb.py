@@ -1,8 +1,10 @@
+import json
 from pymongo import MongoClient
 from config import MONGO_GEO_BOT, MONGO_GEO_BOT_DB
 from learn_bot.emoji_handler import random_emoji
-from datetime import datetime
 from telegram_geobot.country_data.iso_country_parser import iso_country_parser
+from telegram_geobot.country_data.world_regions_parser import all_language_region_data
+
 from emoji import emojize, is_emoji
 
 
@@ -95,9 +97,58 @@ def add_emoji_manually(db):
             print(f'{c_idx}. What you have inserted - [{manual_emoji}] - is not emoji. Skipping {name}.')
     return blank_emojis
 
+
+def enrich_with_region_data(db, region_data_filename, update_region_data=False):
+    '''Obtaining the region data in different languages and adding that to the db
+    update_region_data: bool if True than the data is overwritten in mongo db. If False -- we skip
+    '''
+
+    # getting the full list of iso_alpha_3_country codes 
+    all_countries = db.iso_country_data.find()
+
+    # getting all the region_data
+    with open(region_data_filename, 'r', encoding='UTF-8') as f:
+        region_data_raw = f.read()
+        region_data = json.loads(region_data_raw)
+
+    for c_idx, country in enumerate(all_countries, start=1):
+        country_name = country['country_name']
+        numeric_code = country['numeric_code']
+        
+        # working-through each language and creating dict with all languages by country
+        country_regions_dict = {}
+        for lang in region_data:
+            # new field for a country is only created for the first language, than the data should be "pushed"
+            try:
+                data_row = region_data[lang][numeric_code]
+            except KeyError:
+                print('We have encountered the problem')
+                print(f'No data in the source about {country_name} :: {numeric_code}. Lang: {lang}')
+                continue
+
+            # optimising data row -- not taking excessive field into db. We already have them via other sources
+            del data_row["numeric_id"]
+            del data_row["parent_numeric_id"]
+            del data_row["alpha3_id"]
+            country_regions_dict[lang] = data_row
+            
+        
+        
+        if 'region_data' not in country or update_region_data:
+            print(f'{c_idx}. {country_name} :: {numeric_code}')
+            db.iso_country_data.update_one(
+                {'_id': country['_id']},
+                {
+                    '$set': {'region_data': country_regions_dict}
+                }
+            )
+
+
 if __name__ == '__main__':
     # db_data = enrich_iso_db_with_emoji(mongo_db)
-    add_emoji_manually(mongo_db)
-
+    # add_emoji_manually(mongo_db)
+    
+    input_data = 'telegram_geobot/country_data/region_data/221224_region_data.json'
+    enrich_with_region_data(mongo_db, input_data, update_region_data=False)
 
     print('Hello World!')

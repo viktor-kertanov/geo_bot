@@ -4,6 +4,8 @@ Source: https://unstats.un.org/unsd/methodology/m49/
 '''
 import requests
 from bs4 import BeautifulSoup
+from datetime import datetime
+from telegram_geobot.utils.json_handler import save_data_as_json
 
 REGION_SOURCE_URL = "https://unstats.un.org/unsd/methodology/m49/"
 
@@ -16,7 +18,9 @@ LANGUAGE_LOCATORS = {
     'chinese': 'GeoGroupsCHN'
 }
 
+
 def region_parser(language_locator: str) -> list[dict]:
+    '''Function that obtains the info about regions in one language'''
     req = requests.get(REGION_SOURCE_URL)
     soup = BeautifulSoup(req.content, "html.parser")
 
@@ -62,14 +66,24 @@ def region_parser(language_locator: str) -> list[dict]:
         if region_data[country]["alpha3_id"]
     }
 
+
 def all_language_region_data() -> dict:
-    '''function that collects the info about region in different languages to store furthe in mongo db'''
+    '''function that collects the info about region in different languages and stores the output as json'''
+    
     all_lang_data = {}
     for lang in LANGUAGE_LOCATORS:
         lang_data = region_parser(LANGUAGE_LOCATORS[lang])
         all_lang_data[lang] = lang_data
     
+    # saving region data in different languages as json object
+    today = datetime.now().strftime("%y%m%d")
+    output_filename = f'telegram_geobot/country_data/region_data/{today}_region_data.json'
+    
+    save_data_as_json(all_lang_data, output_filename)
+    
     return all_lang_data
+
+
 if __name__ == '__main__':
     all_region_data = all_language_region_data()
     print('hello world!')
