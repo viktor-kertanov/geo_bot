@@ -7,6 +7,9 @@ from telegram_geobot.country_data.wiki_data import WikiCountry
 from emoji import emojize, is_emoji
 import requests
 from bs4 import BeautifulSoup
+from telegram_geobot.utils.download_images import dl_img
+from glob import glob
+import os
 
 mongo_db_client = MongoClient(MONGO_GEO_BOT)
 mongo_db = mongo_db_client[MONGO_GEO_BOT_DB]
@@ -277,6 +280,46 @@ def enrich_with_eng_capital(db):
                 )
                 continue
 
-if __name__ == '__main__':
+
+def download_flag_images(db):
+    DL_FOLDER = "telegram_geobot/country_data/images/flags/"
+    already_have = glob(f"{DL_FOLDER}*.png")
+    alpha_3_already_have = [el.split('/')[-1].split('_')[0] for el in already_have]
     
+    countries = db.iso_country_data.find({"iso_alpha_3_code": {"$nin": alpha_3_already_have}})
+    
+    for country in countries:
+        alpha_3 = country['iso_alpha_3_code']
+        country_name = '_'.join(country['country_name'].split(' '))
+        numeric = country['numeric_code']
+        alpha_2 = country['iso_alpha_2_code']
+        download_url = country['country_flag_url']
+        extension = download_url.split('.')[-1]
+        filename = f"{DL_FOLDER}{alpha_3}_{numeric}_{alpha_2}_{country_name}.{extension}"
+        dl_img(download_url, filename)
+
+    return None
+
+
+def download_position_images(db):
+    DL_FOLDER = "telegram_geobot/country_data/images/positions/"
+    already_have = glob(f"{DL_FOLDER}*.png")
+    alpha_3_already_have = [el.split('/')[-1].split('_')[0] for el in already_have]
+    
+    countries = db.iso_country_data.find({"iso_alpha_3_code": {"$nin": alpha_3_already_have}})
+    
+    for country in countries:
+        alpha_3 = country['iso_alpha_3_code']
+        country_name = '_'.join(country['country_name'].split(' '))
+        numeric = country['numeric_code']
+        alpha_2 = country['iso_alpha_2_code']
+        download_url = country['country_position_url']
+        extension = download_url.split('.')[-1]
+        filename = f"{DL_FOLDER}{alpha_3}_{numeric}_{alpha_2}_{country_name}_[position].{extension}"
+        dl_img(download_url, filename)
+
+    return None
+
+if __name__ == '__main__':
+    download_position_images(mongo_db)
     print('Hello World!')
