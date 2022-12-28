@@ -1,16 +1,25 @@
 from telegram_geobot.db_handlers.geobot_mongodb import mongo_db, get_or_create_user
+from telegram_geobot.emoji_handlers.flag_emojis import get_n_random_flags, START_EMOJIS
 from telegram import ParseMode
 from telegram_geobot.keyboard import flag_keyboard
 import os
 from os.path import join, isfile
-from random import choice
+from random import choice, sample
 
 
 def start_handler(update, context):
+    user = get_or_create_user(
+        mongo_db, update.effective_user, update.message.chat.id
+    )
+    
+    random_flags = get_n_random_flags(6)
+    first_half_flags = ''.join(random_flags[ :3])
+    second_half_flags = ''.join(random_flags[3: ])
+    
     update.message.reply_text(
-        '''Бот 🌏 <b>"Географию учи"</b> 🌍!
+        f'''{first_half_flags} <b>"Географию учи"</b> {second_half_flags}
 
-Я помогу тебе выучить 🇫🇴 🇺🇾 <b>флаги</b> 🇬🇫 🇸🇨 стран мира, а также научу определять страны по их местоположению.
+Я помогу тебе выучить <b>флаги стран</b>, а также научу определять страны по их местоположению.
 
 <b>Что я умею:</b>
 

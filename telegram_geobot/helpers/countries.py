@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 from random import randint
 from time import sleep
 import os
-from helpers.db_interface import country_title_get_db_row, write_image_to_db
 import base64
 from typing import Type, List
 from fake_useragent import UserAgent
@@ -83,6 +82,8 @@ class WikiCountry:
         """
         position_page = requests.get(self.country_article_link).content
         position_soup = BeautifulSoup(position_page, "html.parser")
+        
+
         image_page_url = position_soup.select_one("table.infobox tbody [data-wikidata-property-id='P242'] a").get("href")
         image_page_url = f"https://ru.wikipedia.org{image_page_url}"
         image_page = requests.get(image_page_url).content
@@ -174,8 +175,6 @@ class WikiCountry:
         """
         images_attrs = ["country_flag", "position_on_map_image"]
         for dl_prefix in images_attrs:
-            country_db_row = country_title_get_db_row(self.country_title)
-            db_col_name = f"{dl_prefix}_bytes"
             headers = {"User-Agent": str(UserAgent().random)}
             img_url = self.__getattribute__(dl_prefix)
             country_eng_title = self.country_eng_title.lower().strip()
@@ -185,39 +184,15 @@ class WikiCountry:
                 "position_on_map_image": "position"
             }
             filename = f"{country_eng_title}_{filename_prefix[dl_prefix]}.{img_type}"
-            if country_db_row[db_col_name]:
-                print(f"{self.country_title} :: {dl_prefix} is already in the db.")
+            image = requests.get(img_url, headers=headers).content
+            if not "Wikimedia Error" in str(image):
+                with open(f"helpers/country_images/{filename}", 'wb') as file:
+                    file.write(image)
+                    print(f"Success: {self.country_eng_title.replace(' ','__')} // {filename_prefix[dl_prefix]}")
+                    sleep(randint(5, 7))
             else:
-                image = requests.get(img_url, headers=headers).content
-                if not "Wikimedia Error" in str(image):
-                    write_image_to_db(self.country_title, db_col_name, image)
-                    with open(f"helpers/country_images/{filename}", 'wb') as file:
-                        file.write(image)
-                        print(f"Success: {self.country_eng_title.replace(' ','__')} // {filename_prefix[dl_prefix]}")
-                        sleep(randint(5, 7))
-                else:
-                    print(f"Could not download: {img_url}")
-                    return None
-
-    @property
-    def db_tuple_insert(self):
-        """INSERT INTO countries(
-                country_title,
-                country_eng_title,
-                images_path,
-                country_flag,
-                country_article_link,
-                position_on_map_image,
-                capital)
-                VALUES (?,?,?,?,?,?,?)"""
-
-        return (self.country_title,
-                self.country_eng_title,
-                self.capital,
-                self.country_flag,
-                self.country_article_link,
-                self.position_on_map_image,
-                )
+                print(f"Could not download: {img_url}")
+                return None
 
 
 def countries_html() -> List:
@@ -229,6 +204,8 @@ def countries_html() -> List:
 
 
 if __name__ == '__main__':
+    a = countries_html()
+
     dl_images = [WikiCountry(c) for c in countries_html()[10:25]]
     for c in dl_images:
         print(c.position_on_map_image)

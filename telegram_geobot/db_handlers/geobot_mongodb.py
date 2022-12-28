@@ -3,10 +3,10 @@ from pymongo import MongoClient
 from config import MONGO_GEO_BOT, MONGO_GEO_BOT_DB
 from learn_bot.emoji_handler import random_emoji
 from telegram_geobot.country_data.iso_country_parser import iso_country_parser
-from telegram_geobot.country_data.world_regions_parser import all_language_region_data
-
+from telegram_geobot.country_data.wiki_data import WikiCountry
 from emoji import emojize, is_emoji
-
+import requests
+from bs4 import BeautifulSoup
 
 mongo_db_client = MongoClient(MONGO_GEO_BOT)
 mongo_db = mongo_db_client[MONGO_GEO_BOT_DB]
@@ -143,12 +143,140 @@ def enrich_with_region_data(db, region_data_filename, update_region_data=False):
                 }
             )
 
+def get_flag_emojis(db):
+    '''Getting all the emojis of flags in one query to play in Telegram bot'''
+    all_flags_cur = db.iso_country_data.find({},{"_id": 0, "emoji": True})
+    
+    return [el["emoji"] for el in all_flags_cur]
+
+
+def enrich_db_with_flag_position_url(db):
+    countries = db.iso_country_data.find(
+        {"$or": [
+            {"country_flag_url": None},
+            {"country_position_url": None}
+        ]}
+    )
+    for c_idx, country in enumerate(countries, start=1):
+        wiki_article = country["country_page_url"]
+        wiki_country = WikiCountry(wiki_article)
+        flag_img = wiki_country.country_flag
+        position_img = wiki_country.position_on_map_image
+        if flag_img:
+            db.iso_country_data.update_one(
+                {'_id': country['_id']},
+                {
+                    '$set': {'country_flag_url': flag_img}
+                }
+            )
+            print(f'{c_idx}. {country["country_name"]}:: successfully added flag: {flag_img}')
+        else:
+            print(f'{c_idx}. {country["country_name"]}:: SKIP flag')
+        if position_img:
+            db.iso_country_data.update_one(
+                {'_id': country['_id']},
+                {
+                    '$set': {'country_position_url': position_img}
+                }
+            )
+            print(f'{c_idx}. {country["country_name"]}:: successfully added position: {position_img}')
+        else:
+            print(f'{c_idx}. {country["country_name"]}:: SKIP position')
+
+
+def enrich_with_ru_wiki_article(db):
+    countries = db.iso_country_data.find({"ru_wiki_article": ""})
+    for c_idx, country in enumerate(countries, start=1):
+        eng_article = country["country_page_url"]
+        req = requests.get(eng_article)
+        soup = BeautifulSoup(req.content, "html.parser")
+        ru_wiki_article = soup.select_one("li.interlanguage-link.interwiki-ru a").get("href", None)
+        if ru_wiki_article:
+            db.iso_country_data.update_one(
+                {'_id': country['_id']},
+                {
+                    '$set': {"ru_wiki_article": ru_wiki_article}
+                }
+            )
+        else:
+            print(f'{c_idx}. No wiki article for {country["country_name"]}.')
+
+def enrich_with_ru_capital(db):
+    countries = db.iso_country_data.find({"capital.russian": {"$exists": False}})
+    for c_idx, country in enumerate(countries, start=1):
+        capital_data_row = {"capital_name": "", "capital_wiki_article_url": ""}
+        db.iso_country_data.update_one(
+                    {'_id': country['_id']},
+                    {
+                        '$set': {
+                            "capital.russian": capital_data_row
+                        }
+                    }
+                )
+        ru_article = country["ru_wiki_article"]
+        req = requests.get(ru_article)
+        soup = BeautifulSoup(req.content, "html.parser")
+        info_data = soup.select("table.infobox tr")
+        for data_el in info_data:
+            try:
+                data_row = data_el.select_one("th a").get("title", None)
+            except:
+                data_row = None
+            if data_row == "Столица":
+                capital_data = data_el.select_one("td span a")
+                if not capital_data:
+                    continue
+                capital_url = f'https://ru.wikipedia.org{capital_data.get("href")}'
+                capital_ru = capital_data.get("title")
+                capital_data_row = {"capital_name": capital_ru, "capital_wiki_article_url": capital_url}
+                db.iso_country_data.update_one(
+                    {'_id': country['_id']},
+                    {
+                        '$set': {
+                            "capital.russian": capital_data_row
+                        }
+                    }
+                )
+                continue
+
+
+def enrich_with_eng_capital(db):
+    countries = db.iso_country_data.find({"capital.english": {"$exists": False}})
+    for c_idx, country in enumerate(countries, start=1):
+        capital_data_row = {"capital_name": "", "capital_wiki_article_url": ""}
+        db.iso_country_data.update_one(
+                    {'_id': country['_id']},
+                    {
+                        '$set': {
+                            "capital.english": capital_data_row
+                        }
+                    }
+                )
+        article = country["country_page_url"]
+        req = requests.get(article)
+        soup = BeautifulSoup(req.content, "html.parser")
+        info_data = soup.select("table.infobox tr")
+        for data_el in info_data:
+            try:
+                data_row = data_el.select_one("th.infobox-label").text.lower()
+            except AttributeError:
+                data_row = None
+            if data_row and "capital" in data_row:
+                capital_data = data_el.select_one("td a")
+                capital_url = f'https://en.wikipedia.org{capital_data.get("href")}'
+                capital_eng = capital_data.get("title")
+                capital_data_row = {"capital_name": capital_eng, "capital_wiki_article_url": capital_url}
+                print(f'{c_idx}. Updating {country["country_name"]} with english capital data: {capital_eng} :: {capital_url}.')
+                db.iso_country_data.update_one(
+                    {'_id': country['_id']},
+                    {
+                        '$set': {
+                            "capital.english": capital_data_row
+                        }
+                    }
+                )
+                continue
 
 if __name__ == '__main__':
-    # db_data = enrich_iso_db_with_emoji(mongo_db)
-    # add_emoji_manually(mongo_db)
     
-    input_data = 'telegram_geobot/country_data/region_data/221224_region_data.json'
-    enrich_with_region_data(mongo_db, input_data, update_region_data=False)
-
     print('Hello World!')
