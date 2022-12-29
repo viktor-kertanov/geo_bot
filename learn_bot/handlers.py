@@ -196,7 +196,7 @@ def flag_picture_rating(update, context):
     save_flag_img_vote(mongo_db, user, image_name, vote)
 
     rating = get_flag_img_rating(mongo_db, image_name)
-    text = f"Спасибо!🫦\nРейтинг картинки: ß{rating}"
+    text = f"Спасибо!🫦\nРейтинг картинки: {rating}"
     update.callback_query.edit_message_caption(caption=text)
 
 

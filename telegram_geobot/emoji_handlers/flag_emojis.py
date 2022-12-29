@@ -20,6 +20,24 @@ def get_n_random_flags(n: int) -> list:
         flags_sample = sample(all_flags, n)
         return flags_sample
 
+
+USER_EMOJI = [
+    ':whale2:',
+    ':dolphin:',
+    ':ocean:',
+    ':dog:',
+    ':cat:',
+    ':alien:',
+    ':heart_eyes:',
+    ':deciduous_tree:',
+    ':cactus:',
+    ':rose:',
+    ':sunflower:',
+    ':tulip:',
+    ':four_leaf_clover:'
+    ]
+
+
 if __name__ == '__main__':
     
     random_flags = get_n_random_flags(5)

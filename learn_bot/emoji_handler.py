@@ -1,5 +1,5 @@
 from emoji import emojize
-from config import USER_EMOJI
+from telegram_geobot.emoji_handlers.flag_emojis import USER_EMOJI
 from random import choice
 
 

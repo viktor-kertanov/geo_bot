@@ -132,6 +132,8 @@ data/country_images
 data/country_images_aux
 data/country_images_svg
 learn_bot/images/*
+
+telegram_geobot/country_data/images/**/*.jpeg
 .DS_Store
 
 #photos
