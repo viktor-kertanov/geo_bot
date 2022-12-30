@@ -3,13 +3,11 @@ from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, Callback
 
 from telegram_geobot.db_handlers.geobot_mongodb import mongo_db, get_or_create_user, get_n_sample_from_db
 from telegram_geobot.emoji_handlers.flag_emojis import get_n_random_flags
-from telegram_geobot.keyboard import flag_keyboard, positions_keyboard, flag_keyboard_main
+from telegram_geobot.keyboard import flag_keyboard, position_keyboard
 from random import choice, sample
 from config import FLAG_IMG_DIR, POSITION_IMG_DIR
-import os
-from os.path import join
 from glob import glob
-
+import json
 
 def start_handler(update: Update, context: CallbackContext):
     user = get_or_create_user(
@@ -34,7 +32,7 @@ def start_handler(update: Update, context: CallbackContext):
     parse_mode=ParseMode.HTML)
 
 
-def flag_game_handler(update: Update, context: CallbackContext):
+def flag_game_handler(update: Update, context: CallbackContext) -> None:
     user = get_or_create_user(
         mongo_db, update.effective_user, update.message.chat.id
     )
@@ -52,13 +50,44 @@ def flag_game_handler(update: Update, context: CallbackContext):
 
     usr_chat_id = update.effective_chat.id
     
-    
-    keyboard = flag_keyboard(answer_options)
+    keyboard = flag_keyboard(answer_options, question)
     context.bot.send_photo(
         chat_id=usr_chat_id,
         photo=open(question_flag, 'rb'),
         reply_markup=keyboard
     )
+
+
+def flag_callback(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    query.answer()
+    cb_data = update.callback_query.data
+    lose_replies = ["Неправильно🫣", "Подучить🌊", "Не повезло🧐", "Жаль🙇‍♂️", "Старайтесь🪢"]
+    win_replies = ["Сила знания🌏", "Всё верно🌍", "Вы географ🌎", "Правильно🗺"]
+    if cb_data['user_win']:
+        init_reply = choice(win_replies)
+    else:
+        init_reply = choice(lose_replies)
+    answer_options_text = '\n'.join(cb_data['answer_options_pretty'])
+    text = f"<b>{init_reply} </b>{chr(10)}{chr(10)}<b>Ваш ответ:{chr(10)}</b><i>{cb_data['user_answer_pretty']}</i>{chr(10)}{chr(10)}<b>Варианты ответа:</b>{chr(10)}{answer_options_text}"
+    update.callback_query.edit_message_caption(caption=text, parse_mode=ParseMode.HTML)
+    return update.callback_query.data
+
+
+def position_callback(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    query.answer()
+    cb_data = update.callback_query.data
+    lose_replies = ["Неправильно🫣", "Подучить🌊", "Не повезло🧐", "Жаль🙇‍♂️", "Старайтесь🪢"]
+    win_replies = ["Сила знания🌏", "Всё верно🌍", "Вы географ🌎", "Правильно🗺"]
+    if cb_data['user_win']:
+        init_reply = choice(win_replies)
+    else:
+        init_reply = choice(lose_replies)
+    answer_options_text = '\n'.join(cb_data['answer_options_pretty'])
+    text = f"<b>{init_reply} </b>{chr(10)}{chr(10)}<b>Ваш ответ:{chr(10)}</b><i>{cb_data['user_answer_pretty']}</i>{chr(10)}{chr(10)}<b>Варианты ответа:</b>{chr(10)}{answer_options_text}"
+    update.callback_query.edit_message_caption(caption=text, parse_mode=ParseMode.HTML)
+    return update.callback_query.data
 
 
 def get_answer_options(db, n_answer_options: int) -> list:
@@ -75,6 +104,8 @@ def get_answer_options(db, n_answer_options: int) -> list:
     print(f"Final order: {', '.join([el['country_name'] for el in answer_options])}")
 
     return answer_options
+
+
 
 
 def position_game_handler(update, context):
@@ -94,7 +125,7 @@ def position_game_handler(update, context):
 
     usr_chat_id = update.effective_chat.id
     
-    keyboard = positions_keyboard(answer_options)
+    keyboard = position_keyboard(answer_options, question)
 
     # cb_data = flag_callback(update, context)
     # print(f"User answer is: {cb_data}")
@@ -105,13 +136,6 @@ def position_game_handler(update, context):
         reply_markup=keyboard, 
     )
 
-
-def flag_callback(update: Update, context: CallbackContext):
-    query = update.callback_query
-    query.answer()
-    text = f"Спасибо!🫦\nВаш ответ: {update.callback_query.data}"
-    update.callback_query.edit_message_caption(caption=text)
-    return update.callback_query.data
 
 if __name__ == '__main__':
     print('Hello world!')
