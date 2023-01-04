@@ -54,6 +54,15 @@ def get_n_sample_from_db(db, n: int) -> list:
     sample = db.iso_country_data.aggregate([{"$sample": {"size": n}}])
     return [el for el in sample]
 
+def get_region_names(db, language='russian', region_level=2) -> dict:
+    regions = db.iso_country_data.aggregate([
+        {"$match":{f"region_data.{language}.region_{region_level}": {"$exists": True}}},
+        {"$group": {"_id": f"$region_data.{language}.region_{region_level}"}}
+
+    ])
+
+    return [el['_id'] for el in regions]
 
 if __name__ == '__main__':
+    a = get_region_names(mongo_db)
     print('Hello World!')
