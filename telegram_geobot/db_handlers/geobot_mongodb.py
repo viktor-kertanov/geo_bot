@@ -1,6 +1,6 @@
 from pymongo import MongoClient
 from config import MONGO_GEO_BOT, MONGO_GEO_BOT_DB
-# from learn_bot.emoji_handler import random_emoji
+from random import choice
 from telegram_geobot.country_data.iso_country_parser import iso_country_parser
 
 
@@ -50,19 +50,30 @@ def get_flag_emojis(db):
     return [el["emoji"] for el in all_flags_cur]
 
 
-def get_n_sample_from_db(db, n: int) -> list:
-    sample = db.iso_country_data.aggregate([{"$sample": {"size": n}}])
+def get_n_sample_from_db(db, n: int, game_region_name: str=None, language: str="russian") -> list:
+    if not game_region_name:
+        regions = get_region_names(db, language)
+        game_region_name = choice(list(regions))
+    
+    print(f'Current region for a game is :{game_region_name}')
+    
+    sample =db.iso_country_data.aggregate([
+        {"$match": {f"region_data.{language}.game_region": game_region_name}},
+        {"$sample": {"size": n}}
+    ])
+    
     return [el for el in sample]
 
-def get_region_names(db, language='russian', region_level=2) -> dict:
+def get_region_names(db, language='russian') -> dict:
     regions = db.iso_country_data.aggregate([
-        {"$match":{f"region_data.{language}.region_{region_level}": {"$exists": True}}},
-        {"$group": {"_id": f"$region_data.{language}.region_{region_level}"}}
+        {"$match":{f"region_data.{language}.game_region": {"$exists": True}}},
+        {"$group": {"_id": f"$region_data.{language}.game_region"}}
 
     ])
 
-    return [el['_id'] for el in regions]
+    return {el['_id'] for el in regions}
 
 if __name__ == '__main__':
-    a = get_region_names(mongo_db)
+    # a = get_region_names(mongo_db)
+    a = get_n_sample_from_db(mongo_db, n=4)
     print('Hello World!')

@@ -8,7 +8,7 @@ import requests
 from bs4 import BeautifulSoup
 from telegram_geobot.utils.download_images import dl_img
 from glob import glob
-
+from telegram_geobot.db_handlers.geobot_mongodb import mongo_db
 
 def enrich_iso_db_with_emoji(db):
     '''Where possible, this function adds emoji to iso_data'''
@@ -255,5 +255,32 @@ def download_position_images(db):
     return None
 
 
+def enrich_with_game_region(db):
+    countries = db.iso_country_data.find({"region_data.russian.region_3": {"$exists": False}, "region_data.russian.game_region": {"$exists": False}})
+    region_languages = ["russian", "english", "french", "spanish", "arabic", "chinese"]
+    for c_idx, country in enumerate(countries, start=1):
+        if country["country_name"] == "Antarctica" or country["country_name"] == "Taiwan, Province of China":
+            continue
+        try:
+            game_region = country["region_data"]["english"]["region_3"]
+            region_3_exists = True
+        except KeyError:
+            region_3_exists = False
+
+        for lang in region_languages:
+            aux_region = country["region_data"][lang]
+            db.iso_country_data.update_one(
+                        {'_id': country['_id']},
+                        {
+                            '$set': {
+                                f"region_data.{lang}.game_region":
+                                    (lambda x: aux_region["region_3"] if x else aux_region["region_2"])\
+                                    (region_3_exists)
+                            }
+                        }
+                    )
+    
+
 if __name__ == '__main__':
+    enrich_with_game_region(mongo_db)
     print('Hello world!')
