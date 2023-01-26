@@ -2,7 +2,7 @@ from telegram import ParseMode, Update
 from telegram.ext import CallbackContext
 from telegram_geobot.db_handlers.geobot_mongodb import mongo_db, get_or_create_user, get_n_sample_from_db
 from telegram_geobot.emoji_handlers.flag_emojis import get_n_random_flags
-from telegram_geobot.keyboard import game_keyboard
+from telegram_geobot.keyboard import game_keyboard, region_settings_keyboard
 from random import choice, sample
 from config import FLAG_IMG_DIR, POSITION_IMG_DIR
 from glob import glob
@@ -24,8 +24,9 @@ def start_handler(update: Update, context: CallbackContext) -> None:
 
 <b>Что я умею:</b>
 
-1) /flags - поиграть во флаги;
+1) /flag - поиграть во флаги;
 2) /position - угадать страну по местоположению
+3) /settings - управляй настройками игры
 
 ''',
     parse_mode=ParseMode.HTML)
@@ -101,6 +102,19 @@ def get_answer_options(db, n_answer_options: int) -> list:
     print(f"Final answer options order: {', '.join([el['country_name'] for el in answer_options])}")
 
     return answer_options
+
+
+def settings(update: Update, context: CallbackContext):
+    user = get_or_create_user(
+        mongo_db, update.effective_user, update.message.chat.id
+    )
+    print('Вызван /settings ')
+    update.message.reply_text(
+        f"Привет! {user['emoji']}",
+        reply_markup=region_settings_keyboard()
+        )
+
+    return None
 
 
 if __name__ == '__main__':

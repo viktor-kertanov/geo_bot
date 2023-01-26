@@ -73,7 +73,20 @@ def get_region_names(db, language='russian') -> dict:
 
     return {el['_id'] for el in regions}
 
+def get_region_names_low_level(db, language='russian') -> dict:
+    regions = db.iso_country_data.aggregate([
+        {"$match":{f"region_data.{language}.region_1": {"$exists": True}}},
+        {"$group":
+            {
+                "_id": f"$region_data.{language}.region_1",
+                "game_region": {"$first": f"$region_data.{language}.game_region"}
+            }},
+        {"$sort": {f"game_region": 1}},
+    ])
+
+    return {el['_id']:el['game_region'] for el in regions}
+
 if __name__ == '__main__':
-    # a = get_region_names(mongo_db)
-    a = get_n_sample_from_db(mongo_db, n=4)
+    a = get_region_names_low_level(mongo_db)
+    # a = get_n_sample_from_db(mongo_db, n=4)
     print('Hello World!')

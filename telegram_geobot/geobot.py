@@ -1,7 +1,7 @@
 import logging
 from config import my_log_format, API_TOKEN
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
-from telegram_geobot.handlers import (start_handler, game_handler, game_callback)
+from telegram_geobot.handlers import (start_handler, game_handler, game_callback, settings)
 
 logging.basicConfig(
     level=logging.INFO, format=my_log_format, filename='telegram_geobot/bot.log'
@@ -15,6 +15,7 @@ def main():
     dp.add_handler(CommandHandler("start", start_handler))
     dp.add_handler(CallbackQueryHandler(game_callback))
     dp.add_handler(CommandHandler(["flag", "position"], game_handler))
+    dp.add_handler(CommandHandler("settings", settings))
     geo_bot.start_polling()
     geo_bot.idle()
 
