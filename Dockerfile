@@ -6,7 +6,7 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH=/opt
 
-RUN mkdir -p /opt/src
+RUN mkdir -p /opt/telegram_geobot
 
 COPY requirements.txt requirements.txt
 COPY .env .env 
@@ -14,7 +14,6 @@ COPY .env .env
 RUN  pip install --upgrade pip \
      && pip install -r requirements.txt
 
-COPY src/. src/.
-COPY tests/. tests/.
+COPY telegram_geobot/. telegram_geobot/.
 
-ENTRYPOINT ["gunicorn", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8001", "src.main:app"]
+ENTRYPOINT ["python3", "-m", "telegram_geobot.main"]
