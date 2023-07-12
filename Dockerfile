@@ -18,4 +18,4 @@ COPY telegram_geobot/. telegram_geobot/.
 
 EXPOSE 8080
 
-ENTRYPOINT ["python3", "-m", "telegram_geobot.main"]
+ENTRYPOINT ["python", "-m", "telegram_geobot.main"]
