@@ -3,7 +3,7 @@ version: '3'
 services:
   telegram_geobot:
     build: .
-    container_name: telegram_geobot    
+    container_name: telegram_geobot
     restart: always
     ports:
       - "8080:8080"
