@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-from config import MONGO_LEARN_BOT, MONGO_LEARN_BOT_DB
+from learn_bot.config import MONGO_LEARN_BOT, MONGO_LEARN_BOT_DB
 from learn_bot.emoji_handler import random_emoji
 from datetime import datetime
 

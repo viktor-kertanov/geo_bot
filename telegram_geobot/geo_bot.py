@@ -1,30 +1,19 @@
-from config import load
+import learn_bot.config as config
 import random
-import logging
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 from db_handlers.db_interface import select_db_country_titles, country_title_get_db_row
+from telegram_geobot.prompts.lose_win_replies import WIN_REPLIES, LOSE_REPLIES
+from telegram_geobot.logs.log_config import logger
 
-PROXY = {
-    'proxy_url': 'socks5://t1.learn.python.ru:1080',
-    'urllib3_proxy_kwargs': {
-        'username': 'learn',
-        'password': 'python'
-    }
-}
-
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
-)
-logger = logging.getLogger(__name__)
 
 def random_countries():
     sample = random.sample(select_db_country_titles(), 4)
-    print(sample)
+    logger.info(sample)
     question = random.choice(sample)
-    print(question)
-    wrong_replies = ["Неправильно", "Подучить", "Не повезло", "Жаль", "Старайтесь"]
-    correct_replies = ["Сила знания", "Всё верно", "Вы географ", "Правильно"]
+    logger.info(question)
+    wrong_replies = LOSE_REPLIES
+    correct_replies = WIN_REPLIES
     question_dict = {}
     for c in sample:
         if c != question:
@@ -32,7 +21,7 @@ def random_countries():
         else:
             question_dict[c] = f"{random.choice(correct_replies)}! <b>{question}</b>."
 
-    print(question_dict)
+    logger.info(question_dict)
     question_country_row = country_title_get_db_row(question)
 
     q_types = {
@@ -53,23 +42,26 @@ def start(update: Update, context: CallbackContext) -> None:
     """Sends a message with three inline buttons attached."""
     countries = random_countries()
     q = countries["sample"]
-    print(q)
+    logger.info(q)
     r = countries["replies"]
-    print(r)
+    logger.info(r)
     img = countries["image"]
 
-    print("-"*100)
+    logger.info("-"*100)
     for i in range(4):
-        print(f"{q[i]} ::: {r[q[i]]}")
-        print(f"{len(q[i].encode('UTF-8'))}::: {len(r[q[i]].encode('UTF-8'))}")
-    print("-"*100)
-    print(countries["question"])
+        logger.info(f"{q[i]} ::: {r[q[i]]}")
+        logger.info(f"{len(q[i].encode('UTF-8'))}::: {len(r[q[i]].encode('UTF-8'))}")
+    logger.info("-"*100)
+    logger.info(countries["question"])
     keyboard = [
         [
             InlineKeyboardButton(q[0], callback_data=r[q[0]]),
-            InlineKeyboardButton(q[1], callback_data=r[q[1]])],
-        [InlineKeyboardButton(q[2], callback_data=r[q[2]]),
-         InlineKeyboardButton(q[3], callback_data=r[q[3]])]
+            InlineKeyboardButton(q[1], callback_data=r[q[1]])
+        ],
+        [
+            InlineKeyboardButton(q[2], callback_data=r[q[2]]),
+            InlineKeyboardButton(q[3], callback_data=r[q[3]])
+        ]
     ]
 
     chat_id = update.message.chat.id
@@ -95,8 +87,8 @@ def help_command(update: Update, context: CallbackContext) -> None:
 
 
 def main() -> None:
-    config = load()
-    updater = Updater(config.api_token, request_kwargs=PROXY, use_context=True)
+    # updater = Updater(config.api_token, request_kwargs=PROXY, use_context=True)
+    updater = Updater(config.api_token, use_context=True)
 
     updater.dispatcher.add_handler(CommandHandler('start', start))
     updater.dispatcher.add_handler(CallbackQueryHandler(button))

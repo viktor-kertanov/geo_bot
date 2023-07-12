@@ -1,11 +1,14 @@
 from pymongo import MongoClient
-from config import MONGO_GEO_BOT, MONGO_GEO_BOT_DB
+from telegram_geobot.config import settings as pydantic_settings
 from random import choice
 from telegram_geobot.country_data.iso_country_parser import iso_country_parser
 
+mongo_url = f"mongodb+srv://{pydantic_settings.mongo_db_user}:{pydantic_settings.mongo_db_password}@cluster0.fdilskv.mongodb.net/geobot_telegram"
+mongo_url += f"?retryWrites=true&w=majority"
 
-mongo_db_client = MongoClient(MONGO_GEO_BOT)
-mongo_db = mongo_db_client[MONGO_GEO_BOT_DB]
+
+mongo_db_client = MongoClient(mongo_url)
+mongo_db = mongo_db_client[pydantic_settings.mongo_db_name]
 
 
 def get_or_create_user(db, effective_user, chat_id):

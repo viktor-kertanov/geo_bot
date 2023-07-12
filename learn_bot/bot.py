@@ -1,4 +1,4 @@
-from config import logging
+from learn_bot.config import logging
 from datetime import time
 from learn_bot.bot_jobs import send_updates
 from learn_bot.anketa import anketa_start, anketa_name,\
@@ -15,7 +15,7 @@ from telegram.ext import Updater, CommandHandler, \
 from telegram.ext import messagequeue as mq
 from telegram.bot import Bot
 from telegram.utils.request import Request
-from config import API_TOKEN
+from learn_bot.config import API_TOKEN
 
 
 class MQBot(Bot):

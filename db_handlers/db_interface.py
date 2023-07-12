@@ -1,6 +1,6 @@
 from db_handlers.db_connection import DatabaseCursor
 from typing import Set, Dict
-from config import GEO_DB
+from learn_bot.config import GEO_DB
 
 
 def create_countries_tb() -> None:

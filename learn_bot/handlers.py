@@ -1,4 +1,4 @@
-from config import logging
+from learn_bot.config import logging
 from datetime import datetime
 from db_handlers.mongo_db import mongo_db, get_or_create_user,\
                                  subscribe_user, unsubscribe_user,\

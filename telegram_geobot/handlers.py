@@ -3,8 +3,10 @@ from telegram.ext import CallbackContext
 from telegram_geobot.db_handlers.geobot_mongodb import mongo_db, get_or_create_user, get_n_sample_from_db
 from telegram_geobot.emoji_handlers.flag_emojis import get_n_random_flags
 from telegram_geobot.keyboard import game_keyboard, region_settings_keyboard
+from telegram_geobot.prompts.lose_win_replies import WIN_REPLIES, LOSE_REPLIES
+from telegram_geobot.prompts.intro_text import INTRO_TEXT
 from random import choice, sample
-from config import FLAG_IMG_DIR, POSITION_IMG_DIR
+from telegram_geobot.config import settings as pydantic_settings
 from glob import glob
 
 
@@ -17,16 +19,16 @@ def start_handler(update: Update, context: CallbackContext) -> None:
     first_half_flags = ''.join(random_flags[ :3])
     second_half_flags = ''.join(random_flags[3: ])
     
+    intro_text = choice(INTRO_TEXT)
     update.message.reply_text(
-        f'''{first_half_flags} <b>"Географию учи"</b> {second_half_flags}
+        f'''{first_half_flags} <b>"Географичка"</b> {second_half_flags}
 
-Я помогу тебе выучить <b>флаги стран</b>, а также научу определять страны по их местоположению.
+<span class='tg-spoiler'>{intro_text}</span>
 
 <b>Что я умею:</b>
 
 1) /flag - поиграть во флаги;
 2) /position - угадать страну по местоположению
-3) /settings - управляй настройками игры
 
 ''',
     parse_mode=ParseMode.HTML)
@@ -44,9 +46,9 @@ def game_handler(update: Update, context: CallbackContext) -> None:
     game_name = update.message.text
     
     if game_name == '/flag':
-        img_dir = FLAG_IMG_DIR
+        img_dir = pydantic_settings.flag_img_dir
     if game_name == '/position':
-        img_dir = POSITION_IMG_DIR
+        img_dir = pydantic_settings.position_img_dir
 
     question_img = [
         el for el in glob(f'{img_dir}*.jpeg')
@@ -67,21 +69,25 @@ def game_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
     cb_data = update.callback_query.data
-    lose_replies = ["Неправильно🫣", "Надо подучить🌊", "Не повезло🧐", "Жаль🙇‍♂️", "Старайтесь🪢"]
-    win_replies = ["Сила знания🌏", "Всё верно🌍", "Вы географ🌎", "Правильно🗺"]
+    lose_replies = LOSE_REPLIES
+    win_replies = WIN_REPLIES
     if cb_data['user_win']:
         init_reply = choice(win_replies)
     else:
         init_reply = choice(lose_replies)
     answer_options_text = '\n'.join(cb_data['answer_options_pretty'])
     
-    text = f"<b>{init_reply} </b>{chr(10)}{chr(10)}<b>Ваш ответ:{chr(10)}</b><i>{cb_data['user_answer_pretty']}</i>{chr(10)}{chr(10)}<b>Варианты ответа:</b>{chr(10)}{answer_options_text}"
-    
+    text = f"<span class='tg-spoiler'><b>{init_reply}</b></span>{chr(10)}{chr(10)}"
+    text += f"<b>Ваш ответ:{chr(10)}</b><i>{cb_data['user_answer_pretty']}</i>{chr(10)}{chr(10)}"
+    text += f"<span class='tg-spoiler'><b>Варианты ответа:</b>{chr(10)}{answer_options_text}</span>"
+    text += f"<b>{chr(10)}{chr(10)}Флаги:</b> /flag"
+    text += f"<b>{chr(10)}Атлас:</b> /position"
+    text += f"<b>{chr(10)}Старт:</b> /start"
     update.callback_query.edit_message_caption(
         caption=text,
         parse_mode=ParseMode.HTML
     )
-    
+
     return update.callback_query.data
 
 
