@@ -8,6 +8,9 @@ from telegram_geobot.prompts.intro_text import INTRO_TEXT
 from random import choice, sample
 from telegram_geobot.config import settings as pydantic_settings
 from glob import glob
+from telegram_geobot.logs.log_config import logger
+from datetime import datetime
+from telegram_geobot.db_handlers.geobot_mongodb import mongo_db
 
 
 def start_handler(update: Update, context: CallbackContext) -> None:
@@ -69,12 +72,18 @@ def game_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
     cb_data = update.callback_query.data
+    
+    logger.info(cb_data)
+    logger.info(context)
+
     lose_replies = LOSE_REPLIES
     win_replies = WIN_REPLIES
+    
     if cb_data['user_win']:
         init_reply = choice(win_replies)
     else:
         init_reply = choice(lose_replies)
+    
     answer_options_text = '\n'.join(cb_data['answer_options_pretty'])
     
     text = f"<span class='tg-spoiler'><b>{init_reply}</b></span>{chr(10)}{chr(10)}"
@@ -87,6 +96,23 @@ def game_callback(update: Update, context: CallbackContext) -> None:
         caption=text,
         parse_mode=ParseMode.HTML
     )
+
+    game_collection_data = {
+        'game_time_utc': datetime.utcnow(),
+        'user_id': query.from_user.id,
+        'user_name': query.from_user.full_name,
+        'user_chat': query.from_user.link,
+        'game_name': cb_data['game_name'],
+        'user_win': cb_data['user_win'],
+        'answer_options_pretty': '||'.join(cb_data['answer_options_pretty']),
+        'correct_answer': cb_data['user_answer_pretty'],
+        'answer_options_alpha_3': '||'.join(cb_data['answer_options_alpha_3']),
+        'correct_answer_alpha_3': cb_data['user_answer_alpha_3'],
+    }
+    try:
+        mongo_db['games'].insert_one(game_collection_data)
+    except Exception as e:
+        logger.error(e, 'Could not write game data to games collection.')
 
     return update.callback_query.data
 
