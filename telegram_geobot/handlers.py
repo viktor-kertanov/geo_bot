@@ -1,5 +1,4 @@
 from telegram import ParseMode, Update
-from telegram import (InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton)
 from telegram.ext import CallbackContext
 from telegram_geobot.db_handlers.geobot_mongodb import mongo_db, get_or_create_user, get_n_sample_from_db
 from telegram_geobot.emoji_handlers.flag_emojis import get_n_random_flags, POSITIVE_EMOJI
@@ -31,9 +30,10 @@ def start_handler(update: Update, context: CallbackContext) -> None:
 
 <b>Что я умею:</b>
 
-1) /flag - поиграть во флаги;
-2) /position - угадать страну по местоположению;
-3) /settings - установить активные реигоны для игры;
+1) /flag - поиграть во флаги
+2) /position - сыграть в атлас
+3) /regions - установить реигоны для игры
+4) /stats - статистика игр
 
 ''',
     parse_mode=ParseMode.HTML)
@@ -45,7 +45,12 @@ def game_handler(update: Update, context: CallbackContext) -> None:
     )
     user_chat_id = update.effective_chat.id
 
-    answer_options = get_answer_options(mongo_db, n_answer_options=4)
+    regions_for_game = [el for el in user['active_regions'] if user['active_regions'][el]]
+    answer_options = get_answer_options(
+        mongo_db,
+        regions_for_game=regions_for_game,
+        n_answer_options=4
+    )
     
     question = choice(answer_options)
     game_name = update.message.text
@@ -74,9 +79,6 @@ def game_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
     cb_data = update.callback_query.data
-    
-    logger.info(cb_data)
-    logger.info(context)
 
     lose_replies = LOSE_REPLIES
     win_replies = WIN_REPLIES
@@ -118,15 +120,15 @@ def game_callback(update: Update, context: CallbackContext) -> None:
         mongo_db['games'].insert_one(game_collection_data)
     except Exception as e:
         logger.error(e, 'Could not write game data to games collection.')
-
+    
     return update.callback_query.data
 
 
-def get_answer_options(db, n_answer_options: int) -> list:
+def get_answer_options(db, regions_for_game: list[str], n_answer_options: int) -> list:
     '''Function that pick n db elements to present them as options to the question.
     One of the options later becomes a question by simple random pick'''
 
-    countries_sample = get_n_sample_from_db(db, n_answer_options)
+    countries_sample = get_n_sample_from_db(db, n_answer_options, regions_for_game=regions_for_game)
 
     len_countries = len(countries_sample)
     random_order = sample(range(len_countries), len_countries)
@@ -139,10 +141,10 @@ def get_answer_options(db, n_answer_options: int) -> list:
     return answer_options
 
 
-def settings(update: Update, context: CallbackContext):
+def regions(update: Update, context: CallbackContext):
     user_data = get_or_create_user(mongo_db, update.effective_user, update.message.chat.id)
     user_active_regions = user_data['active_regions']
-    logger.info('Вызван /settings ')
+    logger.info('Вызван /regions ')
     
     update.message.reply_text(
         f'{choice(POSITIVE_EMOJI)} Во что играем? {choice(POSITIVE_EMOJI)}',
@@ -169,6 +171,49 @@ def region_button_callback(update: Update, context: CallbackContext) -> None:
         f'{choice(POSITIVE_EMOJI)} Во что играем? {choice(POSITIVE_EMOJI)}',
         reply_markup=updated_keyboard
     )
+
+def get_user_stats(update: Update, context: CallbackContext) -> None:
+    collection = mongo_db['games']
+    user_id = update.effective_chat.id
+    games_count = collection.count_documents({'user_id': user_id})
+    wins = collection.count_documents({'user_id': user_id, 'user_win': True})
+    loses = games_count - wins
+
+    flag_game_count = collection.count_documents({'user_id': user_id, 'game_name': '/flag'})
+    flag_wins = collection.count_documents({'user_id': user_id, 'game_name': '/flag', 'user_win': True})
+    flag_loses = flag_game_count - flag_wins
+
+    position_game_count = collection.count_documents({'user_id': user_id, 'game_name': '/position'})
+    position_wins = collection.count_documents({'user_id': user_id, 'game_name': '/position', 'user_win': True})
+    position_loses = position_game_count - position_wins
+
+    total_games = flag_game_count + position_game_count
+    total_wins = flag_wins + position_wins
+    total_loses = flag_loses + position_loses
+
+    flags1 = ''.join(get_n_random_flags(9))
+    flags2 = ''.join(get_n_random_flags(9))
+    update.message.reply_text(
+        f'''
+{choice(POSITIVE_EMOJI)} Статистика игр {choice(POSITIVE_EMOJI)}
+<b>Всего сыграно:</b> {total_games}
+<b>Выиграно:</b> {total_wins} [{total_wins/total_games*100:.1f}%]
+<b>Проиграно:</b> {total_wins} [{total_loses/total_games*100:.1f}%]
+
+{flags1}
+
+<b>Флаги:</b> {flag_game_count}
+<b>Выиграно:</b> {flag_wins} [{flag_wins/flag_game_count*100:.1f}%]
+<b>Проиграно:</b> {flag_wins} [{flag_wins/flag_game_count*100:.1f}%]
+
+{flags2}
+
+<b>Атлас:</b> {position_game_count}
+<b>Выиграно:</b> {position_wins} [{position_wins/flag_game_count*100:.1f}%]
+<b>Проиграно:</b> {position_loses} [{position_loses/flag_game_count*100:.1f}]
+''',
+parse_mode=ParseMode.HTML)
+
 
 if __name__ == '__main__':
     print('Hello world!')

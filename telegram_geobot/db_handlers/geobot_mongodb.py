@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+from pymongo.database import Database
 from telegram_geobot.config import settings as pydantic_settings
 from random import choice
 from telegram_geobot.country_data.iso_country_parser import iso_country_parser
@@ -11,23 +12,44 @@ mongo_db_client = MongoClient(mongo_url)
 mongo_db = mongo_db_client[pydantic_settings.mongo_db_name]
 
 
-def get_or_create_user(db, effective_user, chat_id):
-    user = db.users.find_one({"user_id": effective_user.id})
-
+def get_or_create_user(db: Database, effective_user, chat_id):
+    collection = db['users']
+    user = collection.find_one({"user_id": effective_user.id})
     if not user:
         user = {
             "user_id": effective_user.id,
             "first_name": effective_user.first_name,
             "last_name": effective_user.last_name,
             "username": effective_user.username,
-            "chat_id": chat_id
+            "chat_id": chat_id,
+            "is_bot": effective_user.is_bot,
+            "language_code": effective_user.language_code,
+            "regions": {
+                'Европа': True,
+                'Азия': True,
+                'Африка': True,
+                'Америка': True,
+                'Карибы': True,
+                'Океания': True, 
+            }
         }
-        db.users.insert_one(user)
+       
+        collection.insert_one(user)
+    
+    if not user.get('language_code', None):
+        user = {
+            "chat_id": chat_id,
+            "is_bot": effective_user.is_bot,
+            "language_code": effective_user.language_code,
+        }
+
+        collection.update_one({'user_id': effective_user.id}, {"$set": user})
+
 
     return user
 
 
-def create_or_update_iso_data(db, update_db_rows=False):
+def create_or_update_iso_data(db: Database, update_db_rows=False):
     iso_data = iso_country_parser()
     for c_idx, country_row in enumerate(iso_data, start=1):
         name = country_row["country_name"]
@@ -53,22 +75,30 @@ def get_flag_emojis(db):
     return [el["emoji"] for el in all_flags_cur]
 
 
-def get_n_sample_from_db(db, n: int, game_region_name: str=None, language: str="russian") -> list:
-    if not game_region_name:
+def get_n_sample_from_db(
+        db: Database,
+        n: int,
+        regions_for_game: list[str]=None,
+        language: str="russian"
+) -> list:
+    country_data = db['iso_country_data']
+    if not regions_for_game:
         regions = get_region_names(db, language)
-        game_region_name = choice(list(regions))
+        regions_for_game = choice(list(regions))
     
-    print(f'Current region for a game is :{game_region_name}')
+    print(f'Current region for a game is :{regions_for_game}')
     
-    sample =db.iso_country_data.aggregate([
-        {"$match": {f"region_data.{language}.game_region": game_region_name}},
+    sample =country_data.aggregate([
+        {"$match": {f"region_data.{language}.game_region": {"$in": regions_for_game}}},
+        # {"$match": {"region": {"$in": regions_for_game}}},
         {"$sample": {"size": n}}
     ])
     
     return [el for el in sample]
 
-def get_region_names(db, language='russian') -> dict:
+def get_region_names(db: Database, language='russian') -> dict:
     regions = db.iso_country_data.aggregate([
+        {"$match":{"mute": {"$eq": False}}},
         {"$match":{f"region_data.{language}.game_region": {"$exists": True}}},
         {"$group": {"_id": f"$region_data.{language}.game_region"}}
 
@@ -76,7 +106,7 @@ def get_region_names(db, language='russian') -> dict:
 
     return {el['_id'] for el in regions}
 
-def get_region_names_low_level(db, language='russian') -> dict:
+def get_region_names_low_level(db: Database, language='russian') -> dict:
     regions = db.iso_country_data.aggregate([
         {"$match":{f"region_data.{language}.region_1": {"$exists": True}}},
         {"$group":
@@ -89,7 +119,7 @@ def get_region_names_low_level(db, language='russian') -> dict:
 
     return {el['_id']:el['game_region'] for el in regions}
 
-def update_game_region(mongo_db):
+def update_game_region(mongo_db: Database):
     collection = mongo_db['iso_country_data']
     query = {"region_data.russian.game_region": "Северная и Южная Америка"}
     update = {"$set": {"region_data.russian.game_region": "Америка"}}
@@ -102,14 +132,14 @@ def update_game_region(mongo_db):
     result = collection.update_many({}, update)
     print(f"Deleted the 'field_to_delete' from {result.modified_count} documents.")
 
-def ser_user_active_regions(mongo_db):
+def set_user_active_regions(mongo_db: Database):
     collection = mongo_db['users']
     regions = {
         'Европа': True,
         'Азия': True,
         'Африка': True,
         'Америка': True,
-        'Вест-Индия': True,
+        'Карибы': True,
         'Океания': True, 
     }
     update = {"$set": {"active_regions": regions}}
@@ -119,9 +149,40 @@ def ser_user_active_regions(mongo_db):
     print(f"Modified {result.modified_count} documents.")
 
 
+def create_mute(mongo_db: Database):
+    collection = mongo_db['iso_country_data']
+    update = {"$set": {"mute": False}}
+    collection.update_many({}, update)
+
+
+def west_indies(mongo_db: Database):
+    collection = mongo_db['iso_country_data']
+    query = {"region_data.russian.game_region": "Северная и Южная Америка"}
+    update = {"$set": {"region_data.russian.game_region": "Америка"}}
+
+    result = collection.update_many(query, update)
+
+    print(f"Modified {result.modified_count} documents.")
+
+def caribbean(mongo_db: Database):
+    collection = mongo_db['iso_country_data']
+    query = {"region_data.english.region_1": "Caribbean"}
+    region_languages = ["english", "french", "spanish", "arabic", "chinese"]
+
+    for language in region_languages:
+        result = collection.update_many(
+            query,
+            [{ "$set": { f"region_data.{language}.game_region": f"$region_data.{language}.region_1" } }]
+        )
+        print(f"Modified {result.modified_count} documents for {language}")
+
 if __name__ == '__main__':
-    ser_user_active_regions(mongo_db)
+    # caribbean(mongo_db)
+    # create_mute(mongo_db)
+    # west_indies(mongo_db)
+    # set_user_active_regions(mongo_db)
     # update_game_region(mongo_db)
-    # a = get_region_names(mongo_db)
+    a = get_region_names(mongo_db, 'english')
+    print(a)
     # a = get_n_sample_from_db(mongo_db, n=4)
     print('Hello World!')

@@ -28,7 +28,8 @@ def game_keyboard(answer_options, question, game_name):
         "user_answer_alpha_3": country['iso_alpha_3_code'],
         "user_win": (lambda x, y: True if x == y else False)(country['iso_alpha_3_code'], question['iso_alpha_3_code']),
         "button_index": c_idx,
-        "game_name": game_name
+        "game_name": game_name,
+        "callback_name_id": "play_game_callback_id"
         }
 
         logger.info(f"Button # {c_idx}: {callback_data['user_answer_name']} :: {callback_data['user_answer_alpha_3']}")
@@ -45,11 +46,13 @@ def region_settings_keyboard(user_active_regions):
     }
     row_len = 2
     region_keyboard, cur_row = [], []
-    max_region_character_len = max([len(el) for el in user_active_regions])
     for region, value in user_active_regions.items():
         visualize = visualize_data[value]
-        align_spaces = chr(0x00A0)
-        callback_data = {'user_active_regions': user_active_regions, 'button_pressed_data': region}
+        callback_data = {
+            'user_active_regions': user_active_regions,
+            'button_pressed_data': region,
+            'callback_name_id': 'region_settings_callback_id'
+        }
         button = InlineKeyboardButton(f'{visualize} {region}', callback_data=callback_data)
         if len(cur_row) < row_len:
             cur_row.append(button)

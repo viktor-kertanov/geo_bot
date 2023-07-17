@@ -256,8 +256,11 @@ def download_position_images(db):
 
 
 def enrich_with_game_region(db):
-    countries = db.iso_country_data.find({"region_data.russian.region_3": {"$exists": False}, "region_data.russian.game_region": {"$exists": False}})
+    collection = db['iso_country_data']
+    # countries = collection.find({"region_data.russian.region_3": {"$exists": False}, "region_data.russian.game_region": {"$exists": False}})
+    countries = collection.find({"region_data.russian.game_region": {"$exists": True}})
     region_languages = ["russian", "english", "french", "spanish", "arabic", "chinese"]
+    region_languages = ["russian"]
     for c_idx, country in enumerate(countries, start=1):
         if country["country_name"] == "Antarctica" or country["country_name"] == "Taiwan, Province of China":
             continue
@@ -269,7 +272,7 @@ def enrich_with_game_region(db):
 
         for lang in region_languages:
             aux_region = country["region_data"][lang]
-            db.iso_country_data.update_one(
+            collection.update_one(
                         {'_id': country['_id']},
                         {
                             '$set': {
