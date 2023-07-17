@@ -68,7 +68,6 @@ def start(update: Update, context: CallbackContext) -> None:
     context.bot.send_photo(chat_id=chat_id, photo=img)
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-    # update.message.reply_text(countries["question"], reply_markup=reply_markup)
     update.message.reply_text(countries["question"], reply_markup=reply_markup, parse_mode="HTML")
 
 
@@ -87,7 +86,6 @@ def help_command(update: Update, context: CallbackContext) -> None:
 
 
 def main() -> None:
-    # updater = Updater(config.api_token, request_kwargs=PROXY, use_context=True)
     updater = Updater(config.api_token, use_context=True)
 
     updater.dispatcher.add_handler(CommandHandler('start', start))

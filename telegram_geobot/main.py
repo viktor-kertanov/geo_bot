@@ -1,6 +1,6 @@
 from telegram_geobot.config import settings as pydantic_settings
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
-from telegram_geobot.handlers import (start_handler, game_handler, game_callback)
+from telegram_geobot.handlers import (start_handler, game_handler, game_callback, settings, region_button_callback)
 from telegram_geobot.logs.log_config import logger
 
 def main():
@@ -13,9 +13,11 @@ def main():
     dp = geo_bot.dispatcher
     
     dp.add_handler(CommandHandler("start", start_handler))
+    dp.add_handler(CallbackQueryHandler(region_button_callback))
     dp.add_handler(CallbackQueryHandler(game_callback))
     dp.add_handler(CommandHandler(["flag", "position"], game_handler))
-    
+    dp.add_handler(CommandHandler('settings', settings))
+
     geo_bot.start_polling()
     geo_bot.idle()
 

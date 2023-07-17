@@ -1,7 +1,8 @@
 from telegram import ParseMode, Update
+from telegram import (InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton)
 from telegram.ext import CallbackContext
 from telegram_geobot.db_handlers.geobot_mongodb import mongo_db, get_or_create_user, get_n_sample_from_db
-from telegram_geobot.emoji_handlers.flag_emojis import get_n_random_flags
+from telegram_geobot.emoji_handlers.flag_emojis import get_n_random_flags, POSITIVE_EMOJI
 from telegram_geobot.keyboard import game_keyboard, region_settings_keyboard
 from telegram_geobot.prompts.lose_win_replies import WIN_REPLIES, LOSE_REPLIES
 from telegram_geobot.prompts.intro_text import INTRO_TEXT
@@ -31,7 +32,8 @@ def start_handler(update: Update, context: CallbackContext) -> None:
 <b>Что я умею:</b>
 
 1) /flag - поиграть во флаги;
-2) /position - угадать страну по местоположению
+2) /position - угадать страну по местоположению;
+3) /settings - установить активные реигоны для игры;
 
 ''',
     parse_mode=ParseMode.HTML)
@@ -92,9 +94,11 @@ def game_callback(update: Update, context: CallbackContext) -> None:
     text += f"<b>{chr(10)}{chr(10)}Флаги:</b> /flag"
     text += f"<b>{chr(10)}Атлас:</b> /position"
     text += f"<b>{chr(10)}Старт:</b> /start"
+    
+    
     update.callback_query.edit_message_caption(
         caption=text,
-        parse_mode=ParseMode.HTML
+        parse_mode=ParseMode.HTML,
     )
 
     game_collection_data = {
@@ -109,6 +113,7 @@ def game_callback(update: Update, context: CallbackContext) -> None:
         'answer_options_alpha_3': '||'.join(cb_data['answer_options_alpha_3']),
         'correct_answer_alpha_3': cb_data['user_answer_alpha_3'],
     }
+    
     try:
         mongo_db['games'].insert_one(game_collection_data)
     except Exception as e:
@@ -122,32 +127,48 @@ def get_answer_options(db, n_answer_options: int) -> list:
     One of the options later becomes a question by simple random pick'''
 
     countries_sample = get_n_sample_from_db(db, n_answer_options)
-    # print(f"Initial order: {', '.join([el['country_name'] for el in countries_sample])}")
 
     len_countries = len(countries_sample)
     random_order = sample(range(len_countries), len_countries)
-    # print(f"Random sequence is: {', '.join([str(el) for el in random_order])}")
-    
+
     countries_ordered_aux = zip(countries_sample, random_order)
     answer_options = [el[0] for el in sorted(countries_ordered_aux, key = lambda x: x[1])]
 
-    print(f"Final answer options order: {', '.join([el['country_name'] for el in answer_options])}")
+    logger.info(f"Final answer options order: {', '.join([el['country_name'] for el in answer_options])}")
 
     return answer_options
 
 
 def settings(update: Update, context: CallbackContext):
-    user = get_or_create_user(
-        mongo_db, update.effective_user, update.message.chat.id
-    )
-    print('Вызван /settings ')
+    user_data = get_or_create_user(mongo_db, update.effective_user, update.message.chat.id)
+    user_active_regions = user_data['active_regions']
+    logger.info('Вызван /settings ')
+    
     update.message.reply_text(
-        f"Привет! {user['emoji']}",
-        reply_markup=region_settings_keyboard()
-        )
+        f'{choice(POSITIVE_EMOJI)} Во что играем? {choice(POSITIVE_EMOJI)}',
+        reply_markup=region_settings_keyboard(user_active_regions)
+    )
 
-    return None
+    return user_active_regions
 
+def region_button_callback(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    query_data = query.data
+    user_active_regions = query_data['user_active_regions']
+    button_pressed = query_data['button_pressed_data']
+    user_id = query.from_user.id
+    collection = mongo_db['users']
+
+    updated_active_regions = {f"$set": {f"active_regions.{button_pressed}": not user_active_regions[button_pressed]}}
+    collection.update_one({"user_id": user_id}, updated_active_regions)
+    
+    new_active_regions = collection.find_one({'user_id': user_id})['active_regions']
+    updated_keyboard = region_settings_keyboard(new_active_regions)
+
+    update.callback_query.edit_message_text(
+        f'{choice(POSITIVE_EMOJI)} Во что играем? {choice(POSITIVE_EMOJI)}',
+        reply_markup=updated_keyboard
+    )
 
 if __name__ == '__main__':
     print('Hello world!')

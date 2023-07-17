@@ -89,7 +89,39 @@ def get_region_names_low_level(db, language='russian') -> dict:
 
     return {el['_id']:el['game_region'] for el in regions}
 
+def update_game_region(mongo_db):
+    collection = mongo_db['iso_country_data']
+    query = {"region_data.russian.game_region": "Северная и Южная Америка"}
+    update = {"$set": {"region_data.russian.game_region": "Америка"}}
+
+    result = collection.update_many(query, update)
+
+    print(f"Modified {result.modified_count} documents.")
+
+    update = {"$unset": {"game_region": 1}}
+    result = collection.update_many({}, update)
+    print(f"Deleted the 'field_to_delete' from {result.modified_count} documents.")
+
+def ser_user_active_regions(mongo_db):
+    collection = mongo_db['users']
+    regions = {
+        'Европа': True,
+        'Азия': True,
+        'Африка': True,
+        'Америка': True,
+        'Вест-Индия': True,
+        'Океания': True, 
+    }
+    update = {"$set": {"active_regions": regions}}
+
+    result = collection.update_many({}, update)
+
+    print(f"Modified {result.modified_count} documents.")
+
+
 if __name__ == '__main__':
-    a = get_region_names_low_level(mongo_db)
+    ser_user_active_regions(mongo_db)
+    # update_game_region(mongo_db)
+    # a = get_region_names(mongo_db)
     # a = get_n_sample_from_db(mongo_db, n=4)
     print('Hello World!')
