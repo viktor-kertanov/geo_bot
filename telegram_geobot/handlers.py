@@ -32,7 +32,7 @@ def start_handler(update: Update, context: CallbackContext) -> None:
 
 1) /flag - поиграть во флаги
 2) /position - сыграть в атлас
-3) /regions - установить реигоны для игры
+3) /regions - выбрать регионы для игры
 4) /stats - статистика игр
 
 ''',
@@ -195,22 +195,24 @@ def get_user_stats(update: Update, context: CallbackContext) -> None:
     flags2 = ''.join(get_n_random_flags(9))
     update.message.reply_text(
         f'''
-{choice(POSITIVE_EMOJI)} Статистика игр {choice(POSITIVE_EMOJI)}
-<b>Всего сыграно:</b> {total_games}
-<b>Выиграно:</b> {total_wins} [{total_wins/total_games*100:.1f}%]
-<b>Проиграно:</b> {total_wins} [{total_loses/total_games*100:.1f}%]
+{choice(POSITIVE_EMOJI)} <b>Статистика игр</b> {choice(POSITIVE_EMOJI)}
+
+<u><b>Всего сыграно:</b></u> {total_games}
+<b>🏆 Выигрыш:</b>  {total_wins} (<i>{total_wins/total_games*100:.0f}%</i>)
+<b>🦖 Проигрыш:</b> {total_loses} (<i>{total_loses/total_games*100:.0f}%</i>)
 
 {flags1}
-
-<b>Флаги:</b> {flag_game_count}
-<b>Выиграно:</b> {flag_wins} [{flag_wins/flag_game_count*100:.1f}%]
-<b>Проиграно:</b> {flag_wins} [{flag_wins/flag_game_count*100:.1f}%]
+<span class='tg-spoiler'>
+<u><b>Игра "Флаги":</b></u> {flag_game_count}
+<b>🏆 Выигрыш:</b>  {flag_wins} (<i>{flag_wins/flag_game_count*100:.0f}%</i>)
+<b>🦋 Проигрыш:</b> {flag_loses} (<i>{flag_loses/flag_game_count*100:.0f}%</i>)
 
 {flags2}
 
-<b>Атлас:</b> {position_game_count}
-<b>Выиграно:</b> {position_wins} [{position_wins/flag_game_count*100:.1f}%]
-<b>Проиграно:</b> {position_loses} [{position_loses/flag_game_count*100:.1f}]
+<u><b>Игра "Атлас":</b></u> {position_game_count}
+<b>🏆 Выигрыш:</b>  {position_wins} (<i>{position_wins/position_game_count*100:.0f}%</i>)
+<b>🧩 Проигрыш:</b> {position_loses} (<i>{position_loses/position_game_count*100:.0f}%</i>)
+</span>
 ''',
 parse_mode=ParseMode.HTML)
 
