@@ -13,6 +13,7 @@ from datetime import datetime
 from telegram_geobot.db_handlers.geobot_mongodb import mongo_db
 from telegram_geobot.utils.menu_delete import remove_keyboard_on_root_message
 
+
 def start_handler(update: Update, context: CallbackContext) -> None:
     user_chat_id = update.effective_chat.id
     get_or_create_user(
@@ -31,7 +32,7 @@ def start_handler(update: Update, context: CallbackContext) -> None:
         chat_id=user_chat_id,
         text=message_to_send,
         parse_mode=ParseMode.HTML,
-        reply_markup=menu_keyboard()
+        reply_markup=menu_keyboard(start_button_exists=False)
     )
 
     context.chat_data['root_message_id'] = message.message_id
@@ -98,16 +99,16 @@ def game_callback(update: Update, context: CallbackContext) -> None:
     
     answer_options_text = '\n'.join(cb_data['answer_options_pretty'])
     
-    text = f"<span class='tg-spoiler'><b>{init_reply}</b></span>{chr(10)}{chr(10)}"
+    text = f"<b>{init_reply}</b>{chr(10)}{chr(10)}"
     text += f"<b>Ваш ответ:{chr(10)}</b><i>{cb_data['user_answer_pretty']}</i>{chr(10)}{chr(10)}"
     text += f"<span class='tg-spoiler'><b>Варианты ответов:</b>{chr(10)}{answer_options_text}</span>"
     
-    update.callback_query.edit_message_caption(
+    message = update.callback_query.edit_message_caption(
         caption=text,
         reply_markup=menu_keyboard(cb_data['country_emoji'], cb_data['ru_wiki_article']),
         parse_mode=ParseMode.HTML,
     )
-
+    context.chat_data['root_message_id'] = message.message_id
     # Storing data to the database
     game_collection_data = {
         'game_time_utc': datetime.utcnow(),
@@ -130,7 +131,6 @@ def game_callback(update: Update, context: CallbackContext) -> None:
     return update.callback_query.data
 
 
-@remove_keyboard_on_root_message
 def regions(update: Update, context: CallbackContext):
     if update.message:
         chat_id = update.message.chat.id
@@ -175,14 +175,15 @@ def region_button_callback(update: Update, context: CallbackContext) -> None:
             chat_id = update.message.chat.id
         else:
             chat_id = update.effective_chat.id
-        context.bot.send_message(
+        message = context.bot.send_message(
             chat_id=chat_id,
             text = '   🌏   🌍   🌎   🌏   🌍   🌎    🌏   🌍',
             reply_markup=menu_keyboard()
         )
         context.chat_data['menu_keyboard_sent'] = True
+        context.chat_data['root_message_id'] = message.message_id
 
-@remove_keyboard_on_root_message
+
 def get_user_stats(update: Update, context: CallbackContext) -> None:
     collection = mongo_db['games']
     
@@ -205,8 +206,6 @@ def get_user_stats(update: Update, context: CallbackContext) -> None:
     total_wins = flag_wins + position_wins
     total_loses = flag_loses + position_loses
 
-    flags1 = ''.join(get_n_random_flags(9))
-    flags2 = ''.join(get_n_random_flags(9))
     stats_body = f'''
 {choice(POSITIVE_EMOJI)} <b>Статистика игр</b> {choice(POSITIVE_EMOJI)}
 
@@ -214,25 +213,24 @@ def get_user_stats(update: Update, context: CallbackContext) -> None:
 <b>🏆 Выигрыш:</b>  {total_wins} (<i>{total_wins/total_games*100:.0f}%</i>)
 <b>🦖 Проигрыш:</b> {total_loses} (<i>{total_loses/total_games*100:.0f}%</i>)
 
-{flags1}
 <span class='tg-spoiler'>
 <u><b>Игра "Флаги":</b></u> {flag_game_count}
 <b>🏆 Выигрыш:</b>  {flag_wins} (<i>{flag_wins/flag_game_count*100:.0f}%</i>)
-<b>🦋 Проигрыш:</b> {flag_loses} (<i>{flag_loses/flag_game_count*100:.0f}%</i>)
+<b>🦖 Проигрыш:</b> {flag_loses} (<i>{flag_loses/flag_game_count*100:.0f}%</i>)
 
-{flags2}
 
 <u><b>Игра "Атлас":</b></u> {position_game_count}
 <b>🏆 Выигрыш:</b>  {position_wins} (<i>{position_wins/position_game_count*100:.0f}%</i>)
-<b>🧩 Проигрыш:</b> {position_loses} (<i>{position_loses/position_game_count*100:.0f}%</i>)
+<b>🦖 Проигрыш:</b> {position_loses} (<i>{position_loses/position_game_count*100:.0f}%</i>)
 </span>
 '''
-    context.bot.send_message(
+    message = context.bot.send_message(
         chat_id=chat_id,
         text=stats_body,
         parse_mode=ParseMode.HTML,
         reply_markup=menu_keyboard()
     )
+    context.chat_data['root_message_id'] = message.message_id
 
 
 if __name__ == '__main__':

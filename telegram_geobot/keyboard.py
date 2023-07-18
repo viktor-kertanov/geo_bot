@@ -68,22 +68,24 @@ def region_settings_keyboard(user_active_regions):
     
     return InlineKeyboardMarkup(region_keyboard)
 
-def menu_keyboard(country_name: str=None, wiki_url: str=None):
+def menu_keyboard(country_name: str=None, wiki_url: str=None, start_button_exists:bool=True):
     globe=['🌎', '🌏', '🌍']
 
     flag_alias = "🚩 Игра Флаги"
-    position_alias = "🗺️ Игра 'Атлас'"
+    position_alias = "🗺️ Игра Атлас"
     start_alias = "🏁 Старт"
     stats_alias = "📊 Статистика"
-    regions_alias = f"{choice(globe)} Выбрать регионы для игры {choice(globe)}"
+    regions_alias = f"{choice(globe)} Регионы игры"
 
     buttons_grid = [
         [InlineKeyboardButton(flag_alias, callback_data='flag_play_please'), InlineKeyboardButton(position_alias, callback_data="position_play_please")],
-        [InlineKeyboardButton(start_alias, callback_data='start_please'), InlineKeyboardButton(stats_alias, callback_data="stats_please")],
-        [InlineKeyboardButton(regions_alias, callback_data='change_regions_please')]
+        [InlineKeyboardButton(regions_alias, callback_data='change_regions_please'), InlineKeyboardButton(stats_alias, callback_data="stats_please")],
+        
     ]
+    if start_button_exists:
+        buttons_grid.insert(1, [InlineKeyboardButton(start_alias, callback_data='start_please')])
     if country_name and wiki_url:
-        buttons_grid.insert(0, [InlineKeyboardButton(f'{country_name}📚 Почитать Вики 📚{country_name}', url=wiki_url)])
+        buttons_grid[1].insert(1, InlineKeyboardButton(f'{country_name} Википедия', url=wiki_url))
     
     game_keyboard = InlineKeyboardMarkup(buttons_grid)
     
