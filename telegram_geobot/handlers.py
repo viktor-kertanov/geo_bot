@@ -146,7 +146,7 @@ def regions(update: Update, context: CallbackContext):
     
     message = context.bot.send_message(
         chat_id=chat_id,
-        text=f'{choice(POSITIVE_EMOJI)} Во что играем? {choice(POSITIVE_EMOJI)}',
+        text=f'{choice(POSITIVE_EMOJI)} Выбери регионы для игры {choice(POSITIVE_EMOJI)}',
         reply_markup=region_settings_keyboard(user_active_regions)
     )
     context.chat_data['message_id'] = message.message_id
@@ -173,29 +173,18 @@ def region_button_callback(update: Update, context: CallbackContext) -> None:
         emojis = ['✅', '🦋', '🌈', '🙏🏻', '🐛', '🤨']
         choice_emoji = choice(emojis)
         context.bot.send_message(chat_id=chat_id, text=f'{choice_emoji} Должен быть выбран хотя бы один регион {choice_emoji}')
+        new_active_regions=user_active_regions
     else:
         updated_active_regions = {f"$set": {f"active_regions.{button_pressed}": not user_active_regions[button_pressed]}}
         collection.update_one({"user_id": user_id}, updated_active_regions)
         new_active_regions = collection.find_one({'user_id': user_id})['active_regions']
+    
     updated_keyboard = region_settings_keyboard(new_active_regions)
 
     query.edit_message_text(
-        f'{choice(POSITIVE_EMOJI)} Выбирай регионы для игры. {choice(POSITIVE_EMOJI)}',
+        f'{choice(POSITIVE_EMOJI)} Выбери регионы для игры {choice(POSITIVE_EMOJI)}',
         reply_markup=updated_keyboard
     )
-
-    # if not context.chat_data['menu_keyboard_sent']:
-    #     if update.message:
-    #         chat_id = update.message.chat.id
-    #     else:
-    #         chat_id = update.effective_chat.id
-    #     message = context.bot.send_message(
-    #         chat_id=chat_id,
-    #         text = '   🌏   🌍   🌎   🌏   🌍   🌎    🌏   🌍',
-    #         reply_markup=menu_keyboard()
-    #     )
-    #     context.chat_data['menu_keyboard_sent'] = True
-    #     context.chat_data['root_message_id'] = message.message_id
 
 
 def get_user_stats(update: Update, context: CallbackContext) -> None:
@@ -242,7 +231,7 @@ def get_user_stats(update: Update, context: CallbackContext) -> None:
         chat_id=chat_id,
         text=stats_body,
         parse_mode=ParseMode.HTML,
-        reply_markup=menu_keyboard()
+        reply_markup=menu_keyboard(start_button_exists=False)
     )
     context.chat_data['root_message_id'] = message.message_id
 
