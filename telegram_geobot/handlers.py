@@ -1,8 +1,8 @@
 from telegram import ParseMode, Update
 from telegram.ext import CallbackContext
-from telegram_geobot.db_handlers.geobot_mongodb import mongo_db, get_or_create_user, get_n_sample_from_db
+from telegram_geobot.db_handlers.geobot_mongodb import mongo_db, get_or_create_user, get_answer_options
 from telegram_geobot.emoji_handlers.flag_emojis import get_n_random_flags, POSITIVE_EMOJI
-from telegram_geobot.keyboard import game_keyboard, region_settings_keyboard
+from telegram_geobot.keyboard import game_keyboard, region_settings_keyboard, menu_keyboard
 from telegram_geobot.prompts.lose_win_replies import WIN_REPLIES, LOSE_REPLIES
 from telegram_geobot.prompts.intro_text import INTRO_TEXT
 from random import choice, sample
@@ -11,40 +11,39 @@ from glob import glob
 from telegram_geobot.logs.log_config import logger
 from datetime import datetime
 from telegram_geobot.db_handlers.geobot_mongodb import mongo_db
-
+from telegram_geobot.utils.menu_delete import remove_keyboard_on_root_message
 
 def start_handler(update: Update, context: CallbackContext) -> None:
-    user = get_or_create_user(
-        mongo_db, update.effective_user, update.message.chat.id
+    user_chat_id = update.effective_chat.id
+    get_or_create_user(
+        mongo_db, update.effective_user, user_chat_id
     )
     
     random_flags = get_n_random_flags(6)
-    first_half_flags = ''.join(random_flags[ :3])
-    second_half_flags = ''.join(random_flags[3: ])
     
     intro_text = choice(INTRO_TEXT)
-    update.message.reply_text(
-        f'''{first_half_flags} <b>"Географичка"</b> {second_half_flags}
+    message_to_send = f'''{''.join(random_flags[ :3])} <b>"Географичка"</b> {''.join(random_flags[3: ])}
 
 <span class='tg-spoiler'>{intro_text}</span>
 
-<b>Что я умею:</b>
-
-1) /flag - поиграть во флаги
-2) /position - сыграть в атлас
-3) /regions - выбрать регионы для игры
-4) /stats - статистика игр
-
-''',
-    parse_mode=ParseMode.HTML)
-
-
-def game_handler(update: Update, context: CallbackContext) -> None:
-    user = get_or_create_user(
-        mongo_db, update.effective_user, update.message.chat.id
+'''
+    message = context.bot.send_message(
+        chat_id=user_chat_id,
+        text=message_to_send,
+        parse_mode=ParseMode.HTML,
+        reply_markup=menu_keyboard()
     )
-    user_chat_id = update.effective_chat.id
 
+    context.chat_data['root_message_id'] = message.message_id
+
+@remove_keyboard_on_root_message
+def game_handler(update: Update, context: CallbackContext) -> None:
+    user_chat_id = update.effective_chat.id
+    
+    user = get_or_create_user(
+        mongo_db, update.effective_user, user_chat_id
+    )
+    
     regions_for_game = [el for el in user['active_regions'] if user['active_regions'][el]]
     answer_options = get_answer_options(
         mongo_db,
@@ -53,7 +52,17 @@ def game_handler(update: Update, context: CallbackContext) -> None:
     )
     
     question = choice(answer_options)
-    game_name = update.message.text
+
+    try:
+        callback_data = update.callback_query.data
+        if callback_data == 'flag_play_please':
+            game_name = '/flag'
+        if callback_data == 'position_play_please':
+            game_name = '/position'
+    
+    except AttributeError:
+        logger.info('No callback data')
+        game_name = update.message.text
     
     if game_name == '/flag':
         img_dir = pydantic_settings.flag_img_dir
@@ -65,7 +74,7 @@ def game_handler(update: Update, context: CallbackContext) -> None:
         if question['iso_alpha_3_code'] in el
     ][0]
     
-
+    
     keyboard = game_keyboard(answer_options, question, game_name)
     
     context.bot.send_photo(
@@ -77,8 +86,7 @@ def game_handler(update: Update, context: CallbackContext) -> None:
 
 def game_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
-    query.answer()
-    cb_data = update.callback_query.data
+    cb_data = query.data
 
     lose_replies = LOSE_REPLIES
     win_replies = WIN_REPLIES
@@ -92,17 +100,15 @@ def game_callback(update: Update, context: CallbackContext) -> None:
     
     text = f"<span class='tg-spoiler'><b>{init_reply}</b></span>{chr(10)}{chr(10)}"
     text += f"<b>Ваш ответ:{chr(10)}</b><i>{cb_data['user_answer_pretty']}</i>{chr(10)}{chr(10)}"
-    text += f"<span class='tg-spoiler'><b>Варианты ответа:</b>{chr(10)}{answer_options_text}</span>"
-    text += f"<b>{chr(10)}{chr(10)}Флаги:</b> /flag"
-    text += f"<b>{chr(10)}Атлас:</b> /position"
-    text += f"<b>{chr(10)}Старт:</b> /start"
-    
+    text += f"<span class='tg-spoiler'><b>Варианты ответов:</b>{chr(10)}{answer_options_text}</span>"
     
     update.callback_query.edit_message_caption(
         caption=text,
+        reply_markup=menu_keyboard(cb_data['country_emoji'], cb_data['ru_wiki_article']),
         parse_mode=ParseMode.HTML,
     )
 
+    # Storing data to the database
     game_collection_data = {
         'game_time_utc': datetime.utcnow(),
         'user_id': query.from_user.id,
@@ -124,34 +130,24 @@ def game_callback(update: Update, context: CallbackContext) -> None:
     return update.callback_query.data
 
 
-def get_answer_options(db, regions_for_game: list[str], n_answer_options: int) -> list:
-    '''Function that pick n db elements to present them as options to the question.
-    One of the options later becomes a question by simple random pick'''
-
-    countries_sample = get_n_sample_from_db(db, n_answer_options, regions_for_game=regions_for_game)
-
-    len_countries = len(countries_sample)
-    random_order = sample(range(len_countries), len_countries)
-
-    countries_ordered_aux = zip(countries_sample, random_order)
-    answer_options = [el[0] for el in sorted(countries_ordered_aux, key = lambda x: x[1])]
-
-    logger.info(f"Final answer options order: {', '.join([el['country_name'] for el in answer_options])}")
-
-    return answer_options
-
-
+@remove_keyboard_on_root_message
 def regions(update: Update, context: CallbackContext):
-    user_data = get_or_create_user(mongo_db, update.effective_user, update.message.chat.id)
+    if update.message:
+        chat_id = update.message.chat.id
+    else:
+        chat_id = update.effective_chat.id
+    user_data = get_or_create_user(mongo_db, update.effective_user, chat_id)
     user_active_regions = user_data['active_regions']
-    logger.info('Вызван /regions ')
     
-    update.message.reply_text(
-        f'{choice(POSITIVE_EMOJI)} Во что играем? {choice(POSITIVE_EMOJI)}',
+    message = context.bot.send_message(
+        chat_id=chat_id,
+        text=f'{choice(POSITIVE_EMOJI)} Во что играем? {choice(POSITIVE_EMOJI)}',
         reply_markup=region_settings_keyboard(user_active_regions)
     )
-
+    context.chat_data['message_id'] = message.message_id
+    context.chat_data['menu_keyboard_sent'] = False
     return user_active_regions
+
 
 def region_button_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
@@ -167,18 +163,36 @@ def region_button_callback(update: Update, context: CallbackContext) -> None:
     new_active_regions = collection.find_one({'user_id': user_id})['active_regions']
     updated_keyboard = region_settings_keyboard(new_active_regions)
 
-    update.callback_query.edit_message_text(
+    message_id = context.chat_data.get('message_id')
+
+    query.edit_message_text(
         f'{choice(POSITIVE_EMOJI)} Во что играем? {choice(POSITIVE_EMOJI)}',
         reply_markup=updated_keyboard
     )
 
+    if not context.chat_data['menu_keyboard_sent']:
+        if update.message:
+            chat_id = update.message.chat.id
+        else:
+            chat_id = update.effective_chat.id
+        context.bot.send_message(
+            chat_id=chat_id,
+            text = '   🌏   🌍   🌎   🌏   🌍   🌎    🌏   🌍',
+            reply_markup=menu_keyboard()
+        )
+        context.chat_data['menu_keyboard_sent'] = True
+
+@remove_keyboard_on_root_message
 def get_user_stats(update: Update, context: CallbackContext) -> None:
     collection = mongo_db['games']
-    user_id = update.effective_chat.id
-    games_count = collection.count_documents({'user_id': user_id})
-    wins = collection.count_documents({'user_id': user_id, 'user_win': True})
-    loses = games_count - wins
-
+    
+    if update.message:
+        user_id= update.message.from_user.id
+        chat_id = update.message.chat.id
+    else:
+        user_id = update.callback_query.from_user.id
+        chat_id = update.effective_chat.id
+    
     flag_game_count = collection.count_documents({'user_id': user_id, 'game_name': '/flag'})
     flag_wins = collection.count_documents({'user_id': user_id, 'game_name': '/flag', 'user_win': True})
     flag_loses = flag_game_count - flag_wins
@@ -193,8 +207,7 @@ def get_user_stats(update: Update, context: CallbackContext) -> None:
 
     flags1 = ''.join(get_n_random_flags(9))
     flags2 = ''.join(get_n_random_flags(9))
-    update.message.reply_text(
-        f'''
+    stats_body = f'''
 {choice(POSITIVE_EMOJI)} <b>Статистика игр</b> {choice(POSITIVE_EMOJI)}
 
 <u><b>Всего сыграно:</b></u> {total_games}
@@ -213,8 +226,13 @@ def get_user_stats(update: Update, context: CallbackContext) -> None:
 <b>🏆 Выигрыш:</b>  {position_wins} (<i>{position_wins/position_game_count*100:.0f}%</i>)
 <b>🧩 Проигрыш:</b> {position_loses} (<i>{position_loses/position_game_count*100:.0f}%</i>)
 </span>
-''',
-parse_mode=ParseMode.HTML)
+'''
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=stats_body,
+        parse_mode=ParseMode.HTML,
+        reply_markup=menu_keyboard()
+    )
 
 
 if __name__ == '__main__':

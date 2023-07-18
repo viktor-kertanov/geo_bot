@@ -4,6 +4,7 @@ import numpy as np
 from telegram import Update
 from telegram.ext import CallbackContext
 from telegram_geobot.logs.log_config import logger
+from random import choice
 
 def game_keyboard(answer_options, question, game_name):
     keyboard = []
@@ -19,17 +20,20 @@ def game_keyboard(answer_options, question, game_name):
     for c_idx, country in enumerate(answer_options, start=1):
         country_name = country["region_data"]["russian"]["region_name"]
         callback_data = {
-        "answer_options_pretty": answer_options_pretty,
-        "answer_options_alpha_3": answer_options_alpha_3,
-        "correct_answer_name": question['region_data']['russian']['region_name'],
-        "correct_answer_alpha_3": question['iso_alpha_3_code'],
-        "user_answer_pretty": f"{country['emoji']}{country_name}",
-        "user_answer_name": country_name,
-        "user_answer_alpha_3": country['iso_alpha_3_code'],
-        "user_win": (lambda x, y: True if x == y else False)(country['iso_alpha_3_code'], question['iso_alpha_3_code']),
-        "button_index": c_idx,
-        "game_name": game_name,
-        "callback_name_id": "play_game_callback_id"
+            "answer_options_pretty": answer_options_pretty,
+            "answer_options_alpha_3": answer_options_alpha_3,
+            "correct_answer_name": question['region_data']['russian']['region_name'],
+            "correct_answer_alpha_3": question['iso_alpha_3_code'],
+            "user_answer_pretty": f"{country['emoji']}{country_name}",
+            "user_answer_name": country_name,
+            "user_answer_alpha_3": country['iso_alpha_3_code'],
+            "user_win": (lambda x, y: True if x == y else False)(country['iso_alpha_3_code'], question['iso_alpha_3_code']),
+            "button_index": c_idx,
+            "game_name": game_name,
+            "callback_name_id": "play_game_callback_id",
+            "ru_wiki_article": question['ru_wiki_article'],
+            "en_wiki_article": question['country_page_url'],
+            "country_emoji": question['emoji'],
         }
 
         logger.info(f"Button # {c_idx}: {callback_data['user_answer_name']} :: {callback_data['user_answer_alpha_3']}")
@@ -63,6 +67,27 @@ def region_settings_keyboard(user_active_regions):
         region_keyboard.append(cur_row)
     
     return InlineKeyboardMarkup(region_keyboard)
+
+def menu_keyboard(country_name: str=None, wiki_url: str=None):
+    globe=['🌎', '🌏', '🌍']
+
+    flag_alias = "🚩 Игра Флаги"
+    position_alias = "🗺️ Игра 'Атлас'"
+    start_alias = "🏁 Старт"
+    stats_alias = "📊 Статистика"
+    regions_alias = f"{choice(globe)} Выбрать регионы для игры {choice(globe)}"
+
+    buttons_grid = [
+        [InlineKeyboardButton(flag_alias, callback_data='flag_play_please'), InlineKeyboardButton(position_alias, callback_data="position_play_please")],
+        [InlineKeyboardButton(start_alias, callback_data='start_please'), InlineKeyboardButton(stats_alias, callback_data="stats_please")],
+        [InlineKeyboardButton(regions_alias, callback_data='change_regions_please')]
+    ]
+    if country_name and wiki_url:
+        buttons_grid.insert(0, [InlineKeyboardButton(f'{country_name}📚 Почитать Вики 📚{country_name}', url=wiki_url)])
+    
+    game_keyboard = InlineKeyboardMarkup(buttons_grid)
+    
+    return game_keyboard
 
 
 if __name__ == '__main__':

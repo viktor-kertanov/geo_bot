@@ -4,14 +4,18 @@ from telegram_geobot.handlers import (start_handler, game_handler, game_callback
 from telegram_geobot.logs.log_config import logger
 
 def region_callback_verifier(cb_data: dict[str]):
-    if cb_data['callback_name_id'] == 'region_settings_callback_id':
-        return True
-    return False
+    try:
+        if cb_data.get('callback_name_id', None) == 'region_settings_callback_id':
+            return True
+    except AttributeError:
+        return False
 
 def game_callback_verifier(cb_data: dict[str]):
-    if cb_data['callback_name_id'] == 'play_game_callback_id':
-        return True
-    return False
+    try:
+        if cb_data.get('callback_name_id', None) == 'play_game_callback_id':
+            return True
+    except AttributeError:
+        return False
 
 def main():
     geo_bot = Updater(
@@ -21,9 +25,15 @@ def main():
     )
 
     dp = geo_bot.dispatcher
-    dp.add_handler(CommandHandler("start", start_handler))
     dp.add_handler(CallbackQueryHandler(region_button_callback, pattern=region_callback_verifier))
     dp.add_handler(CallbackQueryHandler(game_callback, pattern=game_callback_verifier))
+    dp.add_handler(CallbackQueryHandler(game_handler, pattern='flag_play_please'))
+    dp.add_handler(CallbackQueryHandler(game_handler, pattern='position_play_please'))
+    dp.add_handler(CallbackQueryHandler(start_handler, pattern='start_please'))
+    dp.add_handler(CallbackQueryHandler(get_user_stats, pattern='stats_please'))
+    dp.add_handler(CallbackQueryHandler(regions, pattern='change_regions_please'))
+
+    dp.add_handler(CommandHandler("start", start_handler))
     dp.add_handler(CommandHandler(["flag", "position"], game_handler))
     dp.add_handler(CommandHandler('regions', regions))
     dp.add_handler(CommandHandler('stats', get_user_stats))

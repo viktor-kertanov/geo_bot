@@ -1,16 +1,33 @@
 from pymongo import MongoClient
 from pymongo.database import Database
 from telegram_geobot.config import settings as pydantic_settings
-from random import choice
+from random import choice, sample
 from telegram_geobot.country_data.iso_country_parser import iso_country_parser
+from telegram_geobot.logs.log_config import logger
 
-mongo_url = f"mongodb+srv://{pydantic_settings.mongo_db_user}:{pydantic_settings.mongo_db_password}@cluster0.fdilskv.mongodb.net/geobot_telegram"
+mongo_url = f"mongodb+srv://{pydantic_settings.mongo_db_user}:"
+mongo_url += f"{pydantic_settings.mongo_db_password}@cluster0.fdilskv.mongodb.net/geobot_telegram"
 mongo_url += f"?retryWrites=true&w=majority"
 
 
 mongo_db_client = MongoClient(mongo_url)
 mongo_db = mongo_db_client[pydantic_settings.mongo_db_name]
 
+def get_answer_options(db, regions_for_game: list[str], n_answer_options: int) -> list:
+    '''Function that pick n db elements to present them as options to the question.
+    One of the options later becomes a question by simple random pick'''
+
+    countries_sample = get_n_sample_from_db(db, n_answer_options, regions_for_game=regions_for_game)
+
+    len_countries = len(countries_sample)
+    random_order = sample(range(len_countries), len_countries)
+
+    countries_ordered_aux = zip(countries_sample, random_order)
+    answer_options = [el[0] for el in sorted(countries_ordered_aux, key = lambda x: x[1])]
+
+    logger.info(f"Final answer options order: {', '.join([el['country_name'] for el in answer_options])}")
+
+    return answer_options
 
 def get_or_create_user(db: Database, effective_user, chat_id):
     collection = db['users']
@@ -90,7 +107,6 @@ def get_n_sample_from_db(
     
     sample =country_data.aggregate([
         {"$match": {f"region_data.{language}.game_region": {"$in": regions_for_game}}},
-        # {"$match": {"region": {"$in": regions_for_game}}},
         {"$sample": {"size": n}}
     ])
     
@@ -177,12 +193,5 @@ def caribbean(mongo_db: Database):
         print(f"Modified {result.modified_count} documents for {language}")
 
 if __name__ == '__main__':
-    # caribbean(mongo_db)
-    # create_mute(mongo_db)
-    # west_indies(mongo_db)
-    # set_user_active_regions(mongo_db)
-    # update_game_region(mongo_db)
-    a = get_region_names(mongo_db, 'english')
-    print(a)
-    # a = get_n_sample_from_db(mongo_db, n=4)
-    print('Hello World!')
+    region_names = get_region_names(mongo_db, 'russian')
+    logger.info(region_names)
