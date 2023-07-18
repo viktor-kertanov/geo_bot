@@ -5,9 +5,14 @@
 Географический обучающий бот [https://t.me/study_geo_bot]
 Гео-телеграм бот должен уметь играть в города, во флаги стран, в столицы, в определение страны по местоположению на карте. Вести статистику по пользователям и выдавать результаты.
 
-## TO-D0
+## Как деплоить проект на AWS Fargate
 
-- Регистрировать в mongodb все сыгранные игры
-- Написать документацию. Black formatter, flake linters.
-- CI/CD -- как будет выглядеть обновление докерконтейнера
-- Написать инструкцию, как запускать локально и как поднимать контейнер в aws fargate
+1. docker build -t telegram_geobot:1.0.1 . - билдим контейнер
+2. docker run - запускаем контейнер и смотрим, что в тестовом режиме всё работает в тестовом боте
+3. Изменяем настройки .env файла, чтобы не тест-деплой был, а продовй
+4. docker tag telegram_geobot:1.0.2 153366345243.dkr.ecr.eu-central-1.amazonaws.com/vk-aws-repo:1.0.2
+5. login if needed:
+   aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 153366345243.dkr.ecr.eu-central-1.amazonaws.com
+6. docker push 153366345243.dkr.ecr.eu-central-1.amazonaws.com/vk-aws-repo:1.0.2
+7. In AWS create new task definition.
+8. In AWS services update the running service with a new task definition.

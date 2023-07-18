@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 from pymongo.database import Database
 from telegram_geobot.config import settings as pydantic_settings
-from random import choice, sample
+from random import choice, sample, random
 from telegram_geobot.country_data.iso_country_parser import iso_country_parser
 from telegram_geobot.logs.log_config import logger
 
@@ -17,7 +17,12 @@ def get_answer_options(db, regions_for_game: list[str], n_answer_options: int) -
     '''Function that pick n db elements to present them as options to the question.
     One of the options later becomes a question by simple random pick'''
 
-    countries_sample = get_n_sample_from_db(db, n_answer_options, regions_for_game=regions_for_game)
+    chance = random()
+    if chance < 0.3:
+        countries_sample = get_n_sample_from_db(db, n_answer_options, regions_for_game=regions_for_game)
+    else:
+        particular_region = choice(regions_for_game)
+        countries_sample = get_n_sample_from_db(db, n_answer_options, regions_for_game=[particular_region])
 
     len_countries = len(countries_sample)
     random_order = sample(range(len_countries), len_countries)

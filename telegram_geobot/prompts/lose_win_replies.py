@@ -256,3 +256,28 @@ WIN_REPLIES_RAW = [
 ]
 
 WIN_REPLIES = [f"🏆 {reply}" for reply in WIN_REPLIES_RAW]
+
+WIN_REPLIES_SHORT_RAW = [
+    "Верно ✅",                # Correct
+    "Правильно 👍",            # Right
+    "Абсолютно верно 🎯",      # Absolutely correct
+    "Точно 🎯",                # Exactly
+    "Отлично 👌",              # Excellent
+    "Верное решение 💡",       # Correct solution
+    "Именно так 👏",           # That's it
+    "Правильный ответ ✨",     # Right answer
+    "Точно в цель 🏹",         # Right on target
+    "Молодец 🌟",              # Well done
+    "Так держать 💪",          # Keep it up
+    "Истина 🗣️",               # Truth
+    "Это правда 🗣️",           # It's true
+    "Все верно ✔️",            # All correct
+    "Верный выбор 🎯",         # Right choice
+    "Так точно 👌",            # Exactly
+    "Безупречно 💯",           # Impeccably
+    "Превосходно 🌟",          # Superbly
+    "Корректно ✅",            # Correctly
+    "Идеально 💯"              # Perfectly
+]
+
+WIN_REPLIES_SHORT = [f"🏆 {reply}" for reply in WIN_REPLIES_SHORT_RAW]

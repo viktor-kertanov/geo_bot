@@ -3,9 +3,9 @@ from telegram.ext import CallbackContext
 from telegram_geobot.db_handlers.geobot_mongodb import mongo_db, get_or_create_user, get_answer_options
 from telegram_geobot.emoji_handlers.flag_emojis import get_n_random_flags, POSITIVE_EMOJI
 from telegram_geobot.keyboard import game_keyboard, region_settings_keyboard, menu_keyboard
-from telegram_geobot.prompts.lose_win_replies import WIN_REPLIES, LOSE_REPLIES
+from telegram_geobot.prompts.lose_win_replies import WIN_REPLIES, LOSE_REPLIES, WIN_REPLIES_SHORT
 from telegram_geobot.prompts.intro_text import INTRO_TEXT
-from random import choice, sample
+from random import choice, sample, random
 from telegram_geobot.config import settings as pydantic_settings
 from glob import glob
 from telegram_geobot.logs.log_config import logger
@@ -90,7 +90,12 @@ def game_callback(update: Update, context: CallbackContext) -> None:
     cb_data = query.data
 
     lose_replies = LOSE_REPLIES
-    win_replies = WIN_REPLIES
+
+    win_prompt_chance = random()
+    if win_prompt_chance < 0.3:
+        win_replies = WIN_REPLIES
+    else:
+        win_replies = WIN_REPLIES_SHORT
     
     if cb_data['user_win']:
         init_reply = choice(win_replies)
@@ -156,32 +161,41 @@ def region_button_callback(update: Update, context: CallbackContext) -> None:
     button_pressed = query_data['button_pressed_data']
     user_id = query.from_user.id
     collection = mongo_db['users']
-
-    updated_active_regions = {f"$set": {f"active_regions.{button_pressed}": not user_active_regions[button_pressed]}}
-    collection.update_one({"user_id": user_id}, updated_active_regions)
     
-    new_active_regions = collection.find_one({'user_id': user_id})['active_regions']
+    if update.message:
+        chat_id = update.message.chat.id
+    else:
+        chat_id = update.effective_chat.id
+    
+    active_regions_true=[key for key, value in user_active_regions.items() if value]
+    
+    if len(active_regions_true) == 1 and active_regions_true[0] == button_pressed:
+        emojis = ['✅', '🦋', '🌈', '🙏🏻', '🐛', '🤨']
+        choice_emoji = choice(emojis)
+        context.bot.send_message(chat_id=chat_id, text=f'{choice_emoji} Должен быть выбран хотя бы один регион {choice_emoji}')
+    else:
+        updated_active_regions = {f"$set": {f"active_regions.{button_pressed}": not user_active_regions[button_pressed]}}
+        collection.update_one({"user_id": user_id}, updated_active_regions)
+        new_active_regions = collection.find_one({'user_id': user_id})['active_regions']
     updated_keyboard = region_settings_keyboard(new_active_regions)
 
-    message_id = context.chat_data.get('message_id')
-
     query.edit_message_text(
-        f'{choice(POSITIVE_EMOJI)} Во что играем? {choice(POSITIVE_EMOJI)}',
+        f'{choice(POSITIVE_EMOJI)} Выбирай регионы для игры. {choice(POSITIVE_EMOJI)}',
         reply_markup=updated_keyboard
     )
 
-    if not context.chat_data['menu_keyboard_sent']:
-        if update.message:
-            chat_id = update.message.chat.id
-        else:
-            chat_id = update.effective_chat.id
-        message = context.bot.send_message(
-            chat_id=chat_id,
-            text = '   🌏   🌍   🌎   🌏   🌍   🌎    🌏   🌍',
-            reply_markup=menu_keyboard()
-        )
-        context.chat_data['menu_keyboard_sent'] = True
-        context.chat_data['root_message_id'] = message.message_id
+    # if not context.chat_data['menu_keyboard_sent']:
+    #     if update.message:
+    #         chat_id = update.message.chat.id
+    #     else:
+    #         chat_id = update.effective_chat.id
+    #     message = context.bot.send_message(
+    #         chat_id=chat_id,
+    #         text = '   🌏   🌍   🌎   🌏   🌍   🌎    🌏   🌍',
+    #         reply_markup=menu_keyboard()
+    #     )
+    #     context.chat_data['menu_keyboard_sent'] = True
+    #     context.chat_data['root_message_id'] = message.message_id
 
 
 def get_user_stats(update: Update, context: CallbackContext) -> None:
