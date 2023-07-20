@@ -68,12 +68,6 @@ def get_or_create_user(db: Database, effective_user, chat_id):
 
         collection.insert_one(user)
 
-    if not user.get("language_code", None):
-        user = {
-            "language_code": effective_user.language_code,
-        }
-        collection.update_one({"user_id": effective_user.id}, {"$set": user})
-
     return user
 
 

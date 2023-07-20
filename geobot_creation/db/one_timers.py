@@ -9,10 +9,10 @@ import requests
 from bs4 import BeautifulSoup
 from emoji import emojize, is_emoji
 
-from telegram_geobot.country_data.wiki_data import WikiCountry
+from geobot_creation.obtain_country_data.wiki_data import WikiCountry
 from telegram_geobot.db.geobot_mongodb import mongo_db
 from telegram_geobot.logs.log_config import logger
-from telegram_geobot.utils.download_images import dl_img
+from geobot_creation.utils.download_images import dl_img
 
 
 def enrich_iso_db_with_emoji(db):

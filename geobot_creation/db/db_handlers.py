@@ -126,11 +126,12 @@ def get_region_names_low_level(db: Database, language="russian") -> dict:
 
 def enrich_with_fields(mongo_db: Database):
     collection = mongo_db['users']
-    users_without_is_admin = collection.find({"is_bot": {"$exists": False}})
+    users_without_is_admin = collection.find({"language_code": {"$exists": False}})
 
     for user in users_without_is_admin:
-        collection.update_one({"_id": user["_id"]}, {"$set": {"is_bot": False}})
+        collection.update_one({"_id": user["_id"]}, {"$set": {"language_code": 'ru'}})
 
 
 if __name__ == '__main__':
+    enrich_with_fields(mongo_db)
     logger.info('Hello world!')
