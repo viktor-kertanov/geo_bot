@@ -89,3 +89,6 @@ if __name__ == "__main__":
     a = WikiCountry(country_page)
     flag_url = a.country_flag
     position_url = a.position_on_map_image
+
+
+
