@@ -123,4 +123,3 @@ def menu_keyboard(
 
 if __name__ == "__main__":
     a = region_settings_keyboard()
-    print("Hello world!")

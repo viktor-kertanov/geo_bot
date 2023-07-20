@@ -1,4 +1,4 @@
-"""Config file for the app."""
+"""Config file for the app"""
 
 import logging
 

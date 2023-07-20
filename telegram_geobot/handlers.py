@@ -6,28 +6,25 @@ from telegram import ParseMode, Update
 from telegram.ext import CallbackContext
 
 from telegram_geobot.config import settings as pydantic_settings
-from telegram_geobot.db_handlers.geobot_mongodb import (
+from telegram_geobot.db.geobot_mongodb import (
     get_answer_options,
     get_or_create_user,
     mongo_db,
 )
-from telegram_geobot.emoji_handlers.flag_emojis import (
-    POSITIVE_EMOJI,
-    get_n_random_flags,
-)
+from telegram_geobot.flag_emojis import POSITIVE_EMOJI, get_n_random_flags
 from telegram_geobot.keyboard import (
     game_keyboard,
     menu_keyboard,
     region_settings_keyboard,
 )
 from telegram_geobot.logs.log_config import logger
+from telegram_geobot.menu_delete import remove_keyboard_on_root_message
 from telegram_geobot.prompts.intro_text import INTRO_TEXT
 from telegram_geobot.prompts.lose_win_replies import (
     LOSE_REPLIES,
     WIN_REPLIES,
     WIN_REPLIES_SHORT,
 )
-from telegram_geobot.utils.menu_delete import remove_keyboard_on_root_message
 
 
 def start_handler(update: Update, context: CallbackContext) -> None:
@@ -83,6 +80,7 @@ def game_handler(update: Update, context: CallbackContext) -> None:
     if game_name == "/position":
         img_dir = pydantic_settings.position_img_dir
 
+    logger.info(img_dir)
     question_img = [
         el for el in glob(f"{img_dir}*.jpeg") if question["iso_alpha_3_code"] in el
     ][0]

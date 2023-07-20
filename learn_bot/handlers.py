@@ -5,7 +5,6 @@ from db_handlers.mongo_db import mongo_db, get_or_create_user,\
                                  save_flag_img_vote, user_voted,\
                                  get_flag_img_rating
 from learn_bot.bot_keyboard import main_keyboard, img_rating_inline_keyboard
-from learn_bot.emoji_handler import emoji_by_string
 from learn_bot.guess_game import guess_number_game, get_bot_number
 from learn_bot.clarifai_handler import (object_exists_on_img,
                                         clarifai_processor, what_is_on_picture)
@@ -133,7 +132,7 @@ def check_user_photo(update, context, default_object='cat'):
     )
 
     if object_exists:
-        emoji = emoji_by_string(object)
+        emoji = '🌈'
         update.message.reply_text(
             f'Ура! На фото найден объект "{object}" {emoji}'
         )
