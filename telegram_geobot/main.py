@@ -1,30 +1,24 @@
-from telegram.ext import CallbackQueryHandler, CommandHandler, Updater
+from telegram.ext import (
+    CallbackQueryHandler,
+    CommandHandler,
+    InvalidCallbackData,
+    Updater,
+)
 
+from telegram_geobot.callback_verifiers import (
+    game_callback_verifier,
+    region_callback_verifier,
+)
 from telegram_geobot.config import settings as pydantic_settings
 from telegram_geobot.handlers import (
     game_callback,
     game_handler,
     get_user_stats,
+    invalid_callback_handler,
     region_button_callback,
     regions,
     start_handler,
 )
-
-
-def region_callback_verifier(cb_data: dict[str]):
-    try:
-        if cb_data.get("callback_name_id", None) == "region_settings_callback_id":
-            return True
-    except AttributeError:
-        return False
-
-
-def game_callback_verifier(cb_data: dict[str]):
-    try:
-        if cb_data.get("callback_name_id", None) == "play_game_callback_id":
-            return True
-    except AttributeError:
-        return False
 
 
 def main():
@@ -35,6 +29,9 @@ def main():
     )
 
     dp = geo_bot.dispatcher
+    dp.add_handler(
+        CallbackQueryHandler(invalid_callback_handler, pattern=InvalidCallbackData)
+    )
     dp.add_handler(
         CallbackQueryHandler(region_button_callback, pattern=region_callback_verifier)
     )

@@ -7,7 +7,7 @@ from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
 
-from telegram_geobot.utils.json_handler import save_data_as_json
+from geobot_creation.utils.json_handler import save_data_as_json
 
 REGION_SOURCE_URL = "https://unstats.un.org/unsd/methodology/m49/"
 

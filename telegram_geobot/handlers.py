@@ -262,5 +262,19 @@ def get_user_stats(update: Update, context: CallbackContext) -> None:
     context.chat_data["root_message_id"] = message.message_id
 
 
+def invalid_callback_handler(update: Update, context: CallbackContext):
+    emojis = ["✅", "🦋", "🌈", "🙏🏻", "🐛", "🤨", "🧩", "🕵🏻‍♀️", "🔧"]
+    update.callback_query.answer(
+        text=f"{choice(emojis)} Эта кнопка больше не работает. Прокрути в самый низ чата, там новые работающие кнопки {choice(emojis)}",
+        show_alert=True,
+    )
+    context.bot.send_message(
+        update.effective_chat.id,
+        "   🌎   🌏   🌍   🌎   🌏   🌍   🌎   🌏   🌍",
+        reply_markup=menu_keyboard(only_start_button=True),
+    )
+    return
+
+
 if __name__ == "__main__":
     print("Hello world!")
