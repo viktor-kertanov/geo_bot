@@ -1,11 +1,11 @@
 from pymongo import MongoClient
 from pymongo.database import Database
 
-from telegram_geobot.bot_creation.obtain_country_data.iso_country_parser import (
+from geobot_creation.obtain_country_data.iso_country_parser import (
     iso_country_parser,
 )
 from telegram_geobot.logs.log_config import logger
-from telegram_geobot.telegram_geobot.config import settings as pydantic_settings
+from telegram_geobot.config import settings as pydantic_settings
 
 mongo_url = f"mongodb+srv://{pydantic_settings.mongo_db_user}:"
 mongo_url += f"{pydantic_settings.mongo_db_password}"
@@ -122,3 +122,15 @@ def get_region_names_low_level(db: Database, language="russian") -> dict:
     )
 
     return {el["_id"]: el["game_region"] for el in regions}
+
+
+def enrich_with_fields(mongo_db: Database):
+    collection = mongo_db['users']
+    users_without_is_admin = collection.find({"is_bot": {"$exists": False}})
+
+    for user in users_without_is_admin:
+        collection.update_one({"_id": user["_id"]}, {"$set": {"is_bot": False}})
+
+
+if __name__ == '__main__':
+    logger.info('Hello world!')

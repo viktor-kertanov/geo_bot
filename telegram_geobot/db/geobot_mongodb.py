@@ -1,3 +1,4 @@
+from datetime import datetime
 from random import choice, random, sample
 
 from pymongo import MongoClient
@@ -61,17 +62,16 @@ def get_or_create_user(db: Database, effective_user, chat_id):
                 "Карибы": True,
                 "Океания": True,
             },
+            "user_created": datetime.utcnow(),
+            "is_admin": False,
         }
 
         collection.insert_one(user)
 
     if not user.get("language_code", None):
         user = {
-            "chat_id": chat_id,
-            "is_bot": effective_user.is_bot,
             "language_code": effective_user.language_code,
         }
-
         collection.update_one({"user_id": effective_user.id}, {"$set": user})
 
     return user
