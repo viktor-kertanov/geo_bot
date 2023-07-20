@@ -78,8 +78,6 @@ class WikiCountry:
             res = int(item.text.split()[0].replace(",", ""))
             res_list.append(res)
         max_res = max(res_list)
-        # print(f"Res_list:{res_list}")
-        # print(f"Max res: {max_res}")
         return res_list.index(max_res)
 
 
@@ -89,6 +87,3 @@ if __name__ == "__main__":
     a = WikiCountry(country_page)
     flag_url = a.country_flag
     position_url = a.position_on_map_image
-
-
-
