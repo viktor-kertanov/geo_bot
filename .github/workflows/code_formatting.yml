@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -26,11 +26,14 @@ jobs:
 
       - name: Run flake8
         run: flake8 telegram_geobot
+        continue-on-error: false
 
       - name: Run isort
         run: isort telegram_geobot
+        continue-on-error: false
 
       - name: Run black
         run: black telegram_geobot
+        continue-on-error: false
 
 
