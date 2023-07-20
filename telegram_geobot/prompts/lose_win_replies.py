@@ -1,4 +1,5 @@
 import random
+
 losing_face_emojis = ["😞", "😔", "😕", "🙁", "😣", "😓", "😩", "😫", "😭", "😖"]
 
 LOSE_REPLIES_RAW = [
@@ -21,12 +22,35 @@ LOSE_REPLIES_RAW = [
     "К сожалению, вы заблудились во времени и оказались в неправильной эпохе🕰️",
     "Ваш ответ настолько экзотичен, что можно сделать из него географический тренд🌴",
     "Вам нужно получить пропуск в географический университет для начала обучения🎓",
-    "У вас есть потенциал стать географом-миллионером, но не с этим ответом💰"
+    "У вас есть потенциал стать географом-миллионером, но не с этим ответом💰",
 ]
 
-LOSE_REPLIES = [f"{random.choice(losing_face_emojis)} {reply}" for reply in LOSE_REPLIES_RAW]
+LOSE_REPLIES = [
+    f"{random.choice(losing_face_emojis)} {reply}" for reply in LOSE_REPLIES_RAW
+]
 
-winning_emojis = ["🎉", "🏆", "🥇", "🥳", "🎊", "🙌", "👏", "🔥", "🌟", "✨", "🎇", "🎆", "🎖️", "👍", "👌", "💯", "🙏", "🤩", "😄", "😃"]
+winning_emojis = [
+    "🎉",
+    "🏆",
+    "🥇",
+    "🥳",
+    "🎊",
+    "🙌",
+    "👏",
+    "🔥",
+    "🌟",
+    "✨",
+    "🎇",
+    "🎆",
+    "🎖️",
+    "👍",
+    "👌",
+    "💯",
+    "🙏",
+    "🤩",
+    "😄",
+    "😃",
+]
 
 
 WIN_REPLIES_RAW = [
@@ -258,26 +282,26 @@ WIN_REPLIES_RAW = [
 WIN_REPLIES = [f"🏆 {reply}" for reply in WIN_REPLIES_RAW]
 
 WIN_REPLIES_SHORT_RAW = [
-    "Верно ✅",                # Correct
-    "Правильно 👍",            # Right
-    "Абсолютно верно 🎯",      # Absolutely correct
-    "Точно 🎯",                # Exactly
-    "Отлично 👌",              # Excellent
-    "Верное решение 💡",       # Correct solution
-    "Именно так 👏",           # That's it
-    "Правильный ответ ✨",     # Right answer
-    "Точно в цель 🏹",         # Right on target
-    "Молодец 🌟",              # Well done
-    "Так держать 💪",          # Keep it up
-    "Истина 🗣️",               # Truth
-    "Это правда 🗣️",           # It's true
-    "Все верно ✔️",            # All correct
-    "Верный выбор 🎯",         # Right choice
-    "Так точно 👌",            # Exactly
-    "Безупречно 💯",           # Impeccably
-    "Превосходно 🌟",          # Superbly
-    "Корректно ✅",            # Correctly
-    "Идеально 💯"              # Perfectly
+    "Верно ✅",  # Correct
+    "Правильно 👍",  # Right
+    "Абсолютно верно 🎯",  # Absolutely correct
+    "Точно 🎯",  # Exactly
+    "Отлично 👌",  # Excellent
+    "Верное решение 💡",  # Correct solution
+    "Именно так 👏",  # That's it
+    "Правильный ответ ✨",  # Right answer
+    "Точно в цель 🏹",  # Right on target
+    "Молодец 🌟",  # Well done
+    "Так держать 💪",  # Keep it up
+    "Истина 🗣️",  # Truth
+    "Это правда 🗣️",  # It's true
+    "Все верно ✔️",  # All correct
+    "Верный выбор 🎯",  # Right choice
+    "Так точно 👌",  # Exactly
+    "Безупречно 💯",  # Impeccably
+    "Превосходно 🌟",  # Superbly
+    "Корректно ✅",  # Correctly
+    "Идеально 💯",  # Perfectly
 ]
 
 WIN_REPLIES_SHORT = [f"🏆 {reply}" for reply in WIN_REPLIES_SHORT_RAW]

@@ -1,14 +1,16 @@
 from random import randint
 from time import sleep
-from fake_useragent import UserAgent
+
 import requests
+from fake_useragent import UserAgent
 
 
 def dl_img(img_url, filename):
-    headers = {"User-Agent": str(UserAgent().random)}
+    ua = UserAgent()
+    headers = {"User-Agent": str(ua.random)}
     image = requests.get(img_url, headers=headers).content
-    if not "Wikimedia Error" in str(image):
-        with open(filename, 'wb') as file:
+    if str(image) not in "Wikimedia Error":
+        with open(filename, "wb") as file:
             file.write(image)
             print(f"Success: {filename}")
             sleep(randint(5, 7))
@@ -17,7 +19,5 @@ def dl_img(img_url, filename):
         return None
 
 
-
-
-if __name__ == '__main__':
-    print('Hello world!')
+if __name__ == "__main__":
+    print("Hello world!")
