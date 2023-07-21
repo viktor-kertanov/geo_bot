@@ -3,6 +3,7 @@ from glob import glob
 from os.path import isfile
 
 from PIL import Image
+from telegram_geobot.logs.log_config import logger
 
 
 def convert_png_to_jpg(images_path, remove_original=False):
@@ -13,7 +14,7 @@ def convert_png_to_jpg(images_path, remove_original=False):
         new_img_name = image.replace(".png", new_file_ext)
         if isfile(new_img_name):
             # if the image already exists we move to the next flag
-            print(
+            logger.info(
                 f"Moving to next image as we already have this one::\
                      {new_img_name}"
             )
@@ -32,14 +33,14 @@ def convert_png_to_jpg(images_path, remove_original=False):
             output_img.save(new_img_name, format="JPEG", quality=95)
 
         if isfile(new_img_name):
-            print(f"Successfully created image:: {new_img_name}")
+            logger.info(f"Successfully created image:: {new_img_name}")
         if remove_original:
-            print("Removing the original image")
+            logger.info("Removing the original image")
             os.remove(image)
 
     return images_path
 
 
 if __name__ == "__main__":
-    images_folder = "telegram_geobot/country_data/images/"
+    images_folder = "geobot_creation/images/"
     original_imgs = glob(f"{images_folder}**/*.png")

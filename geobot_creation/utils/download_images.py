@@ -3,6 +3,7 @@ from time import sleep
 
 import requests
 from fake_useragent import UserAgent
+from telegram_geobot.logs.log_config import logger
 
 
 def dl_img(img_url, filename):
@@ -12,12 +13,8 @@ def dl_img(img_url, filename):
     if str(image) not in "Wikimedia Error":
         with open(filename, "wb") as file:
             file.write(image)
-            print(f"Success: {filename}")
+            logger.info(f"Success: {filename}")
             sleep(randint(5, 7))
     else:
-        print(f"Could not download:\n{img_url}")
+        logger.info(f"Could not download:\n{img_url}")
         return None
-
-
-if __name__ == "__main__":
-    print("Hello world!")

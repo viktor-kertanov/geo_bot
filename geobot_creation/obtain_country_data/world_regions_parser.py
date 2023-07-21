@@ -78,7 +78,7 @@ def all_language_region_data() -> dict:
     # saving region data in different languages as json object
     today = datetime.now().strftime("%y%m%d")
     output_filename = (
-        f"telegram_geobot/country_data/region_data/{today}_region_data.json"
+        f"geobot_creation/obtain_country_data/region_data/{today}_region_data.json"
     )
 
     save_data_as_json(all_lang_data, output_filename)
@@ -87,5 +87,4 @@ def all_language_region_data() -> dict:
 
 
 if __name__ == "__main__":
-    all_region_data = all_language_region_data()
-    print("hello world!")
+    all_language_region_data()
