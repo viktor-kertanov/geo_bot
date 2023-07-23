@@ -54,7 +54,7 @@ def get_or_create_user(db: Database, effective_user, chat_id):
             "chat_id": chat_id,
             "is_bot": effective_user.is_bot,
             "language_code": effective_user.language_code,
-            "regions": {
+            "active_regions": {
                 "Европа": True,
                 "Азия": True,
                 "Африка": True,

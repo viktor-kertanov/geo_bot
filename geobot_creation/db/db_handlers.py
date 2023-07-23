@@ -132,6 +132,22 @@ def enrich_with_fields(mongo_db: Database):
         collection.update_one({"_id": user["_id"]}, {"$set": {"language_code": 'ru'}})
 
 
+def fix_active_regions(mongo_db: Database):
+    collection = mongo_db['users']
+    query = {"regions": {"$exists": True}}
+
+    update_query = {"$rename": {"regions": "active_regions"}}
+    collection.update_many(query, update_query)
+
+
+def delete_inna(mongo_db: Database):
+    collection = mongo_db['games']
+    delete_result = collection.delete_many({"user_id": 1670826777})
+
+    print(f"Number of documents deleted: {delete_result.deleted_count}")
+
+
 if __name__ == '__main__':
-    enrich_with_fields(mongo_db)
-    logger.info('Hello world!')
+    fix_active_regions(mongo_db)
+    delete_inna(mongo_db)
+    # logger.info('Hello world!')

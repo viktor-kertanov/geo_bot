@@ -2,7 +2,7 @@ from datetime import datetime
 from unittest.mock import Mock
 
 import pytest
-from telegram import Bot, Chat,  Message, Update, User
+from telegram import Bot, Chat, Message, Update, User
 from telegram.ext import Updater
 from telegram.ext.callbackcontext import CallbackContext
 
@@ -11,16 +11,16 @@ from telegram.ext.callbackcontext import CallbackContext
 def effective_user():
     return User(
         id=1670826999,
-        first_name='Viktor',
-        last_name='Kertanov',
-        username='viktor_kertanov',
-        is_bot=False
+        first_name="Viktor",
+        last_name="Kertanov",
+        username="viktor_kertanov",
+        is_bot=False,
     )
 
 
 @pytest.fixture
 def updater():
-    bot = Bot(token='123')
+    bot = Bot(token="123")
     return Updater(bot=bot, use_context=True)
 
 
@@ -29,9 +29,9 @@ def make_message(text, user, bot):
         message_id=1,
         from_user=user,
         date=datetime.now(),
-        chat=Chat(id=1, type='private'),
+        chat=Chat(id=1, type="private"),
         text=text,
-        bot=bot
+        bot=bot,
     )
 
     message.reply_text = Mock(return_value=None)
@@ -41,7 +41,7 @@ def make_message(text, user, bot):
 
 def call_handler(updater, handler, message):
     update = Update(update_id=1, message=message)
-    context = CallbackContext.from_update(update,  updater.dispatcher)
+    context = CallbackContext.from_update(update, updater.dispatcher)
 
     return handler(update, context)
 

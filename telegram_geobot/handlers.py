@@ -235,22 +235,31 @@ def get_user_stats(update: Update, context: CallbackContext) -> None:
     total_wins = flag_wins + position_wins
     total_loses = flag_loses + position_loses
 
+    total_win_ratio = total_wins / total_games * 100 if total_games != 0 else 0
+    total_lose_ratio = total_loses / total_games * 100 if total_games != 0 else 0
+
+    flag_win_ratio = flag_wins / flag_game_count * 100 if flag_game_count != 0 else 0
+    flag_lose_ratio = flag_loses / flag_game_count * 100 if flag_game_count != 0 else 0
+
+    position_win_ratio = position_wins / position_game_count * 100 if position_game_count != 0 else 0
+    position_lose_ratio = position_loses / position_game_count * 100 if position_game_count != 0 else 0
+
     stats_body = f"""
 {choice(POSITIVE_EMOJI)} <b>Статистика игр</b> {choice(POSITIVE_EMOJI)}
 
 <u><b>Всего сыграно:</b></u> {total_games}
-<b>🏆 Выигрыш:</b>  {total_wins} (<i>{total_wins/total_games*100:.0f}%</i>)
-<b>🦖 Проигрыш:</b> {total_loses} (<i>{total_loses/total_games*100:.0f}%</i>)
+<b>🏆 Выигрыш:</b>  {total_wins} (<i>{total_win_ratio:.0f}%</i>)
+<b>🦖 Проигрыш:</b> {total_loses} (<i>{total_lose_ratio:.0f}%</i>)
 
 <span class='tg-spoiler'>
 <u><b>Игра "Флаги":</b></u> {flag_game_count}
-<b>🏆 Выигрыш:</b>  {flag_wins} (<i>{flag_wins/flag_game_count*100:.0f}%</i>)
-<b>🦖 Проигрыш:</b> {flag_loses} (<i>{flag_loses/flag_game_count*100:.0f}%</i>)
+<b>🏆 Выигрыш:</b>  {flag_wins} (<i>{flag_win_ratio:.0f}%</i>)
+<b>🦖 Проигрыш:</b> {flag_loses} (<i>{flag_lose_ratio:.0f}%</i>)
 
 
 <u><b>Игра "Атлас":</b></u> {position_game_count}
-<b>🏆 Выигрыш:</b>  {position_wins} (<i>{position_wins/position_game_count*100:.0f}%</i>)
-<b>🦖 Проигрыш:</b> {position_loses} (<i>{position_loses/position_game_count*100:.0f}%</i>)
+<b>🏆 Выигрыш:</b>  {position_wins} (<i>{position_win_ratio:.0f}%</i>)
+<b>🦖 Проигрыш:</b> {position_loses} (<i>{position_lose_ratio:.0f}%</i>)
 </span>
 """
     message = context.bot.send_message(

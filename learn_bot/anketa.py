@@ -1,13 +1,13 @@
-from db_handlers.mongo_db import mongo_db, get_or_create_user,  save_anketa
-from telegram import ReplyKeyboardRemove, ReplyKeyboardMarkup, ParseMode
+from telegram import ParseMode, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ConversationHandler
+
+from db_handlers.mongo_db import get_or_create_user, mongo_db, save_anketa
 from learn_bot.bot_keyboard import main_keyboard
 
 
 def anketa_start(update, context):
     update.message.reply_text(
-        "Введите имя и фамилию, пожалуйста 🙏🏻",
-        reply_markup=ReplyKeyboardRemove()
+        "Введите имя и фамилию, пожалуйста 🙏🏻", reply_markup=ReplyKeyboardRemove()
     )
     return "name"
 
@@ -24,8 +24,7 @@ def anketa_name(update, context):
         reply_keyboard = [[1, 2, 3, 4, 5]]
         update.message.reply_text(
             "Пожалуйста оцените нашего бота по шкале от 1 🤮 до 5 😍",
-            reply_markup=ReplyKeyboardMarkup(
-                reply_keyboard, one_time_keyboard=True)
+            reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),
         )
         return "rating"
 
@@ -40,30 +39,22 @@ def anketa_rating(update, context):
 
 def anketa_skip(update, context):
     context.user_data["anketa"]["comment"] = None
-    user = get_or_create_user(
-        mongo_db, update.effective_user,
-        update.message.chat.id
-    )
-    save_anketa(mongo_db, user['user_id'], context.user_data["anketa"])
+    user = get_or_create_user(mongo_db, update.effective_user, update.message.chat.id)
+    save_anketa(mongo_db, user["user_id"], context.user_data["anketa"])
     user_text = format_anketa(context.user_data["anketa"])
     update.message.reply_text(
-        user_text, reply_markup=main_keyboard(),
-        parse_mode=ParseMode.HTML
+        user_text, reply_markup=main_keyboard(), parse_mode=ParseMode.HTML
     )
     return ConversationHandler.END
 
 
 def anketa_comment(update, context):
     context.user_data["anketa"]["comment"] = update.message.text
-    user = get_or_create_user(
-        mongo_db,
-        update.effective_user, update.message.chat.id
-    )
-    save_anketa(mongo_db, user['user_id'], context.user_data["anketa"])
+    user = get_or_create_user(mongo_db, update.effective_user, update.message.chat.id)
+    save_anketa(mongo_db, user["user_id"], context.user_data["anketa"])
     user_text = format_anketa(context.user_data["anketa"])
     update.message.reply_text(
-        user_text, reply_markup=main_keyboard(),
-        parse_mode=ParseMode.HTML
+        user_text, reply_markup=main_keyboard(), parse_mode=ParseMode.HTML
     )
     return ConversationHandler.END
 

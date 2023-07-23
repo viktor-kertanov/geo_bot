@@ -1,21 +1,40 @@
-from learn_bot.config import logging
 from datetime import time
-from learn_bot.bot_jobs import send_updates
-from learn_bot.anketa import anketa_start, anketa_name,\
-    anketa_rating, anketa_skip, anketa_comment, anketa_fallback
-from learn_bot.handlers import\
-    greet_user, guess_number_handler, send_flag_picture,\
-    user_coordinates, talk_to_me, check_user_photo,\
-    subscribe_user_handler, unsubscribe_user_handler, set_alarm,\
-    flag_picture_rating
+
 import pytz
-from telegram.ext import Updater, CommandHandler, \
-                         MessageHandler, Filters, ConversationHandler,\
-                         CallbackQueryHandler
-from telegram.ext import messagequeue as mq
 from telegram.bot import Bot
+from telegram.ext import (
+    CallbackQueryHandler,
+    CommandHandler,
+    ConversationHandler,
+    Filters,
+    MessageHandler,
+    Updater,
+)
+from telegram.ext import messagequeue as mq
 from telegram.utils.request import Request
-from learn_bot.config import API_TOKEN
+
+from learn_bot.anketa import (
+    anketa_comment,
+    anketa_fallback,
+    anketa_name,
+    anketa_rating,
+    anketa_skip,
+    anketa_start,
+)
+from learn_bot.bot_jobs import send_updates
+from learn_bot.config import API_TOKEN, logging
+from learn_bot.handlers import (
+    check_user_photo,
+    flag_picture_rating,
+    greet_user,
+    guess_number_handler,
+    send_flag_picture,
+    set_alarm,
+    subscribe_user_handler,
+    talk_to_me,
+    unsubscribe_user_handler,
+    user_coordinates,
+)
 
 
 class MQBot(Bot):
@@ -42,7 +61,7 @@ def main():
     echo_bot = Updater(bot=my_bot, use_context=True)
 
     jq = echo_bot.job_queue
-    target_time = time(10,  17, tzinfo=pytz.timezone('Europe/Moscow'))
+    target_time = time(10, 17, tzinfo=pytz.timezone("Europe/Moscow"))
     # jq.run_repeating(send_updates, interval=15, first=1)
     jq.run_daily(send_updates, time=target_time, days=(0, 2, 4))
 
@@ -54,20 +73,22 @@ def main():
         ],
         states={
             "name": [MessageHandler(Filters.text, anketa_name)],
-            "rating": [MessageHandler(
-                Filters.regex("^(1|2|3|4|5)$"),
-                anketa_rating)],
+            "rating": [MessageHandler(Filters.regex("^(1|2|3|4|5)$"), anketa_rating)],
             "comment": [
-                CommandHandler('skip', anketa_skip),
-                MessageHandler(Filters.text, anketa_comment)
-            ]
+                CommandHandler("skip", anketa_skip),
+                MessageHandler(Filters.text, anketa_comment),
+            ],
         },
         fallbacks=[
             MessageHandler(
-                Filters.text | Filters.photo | Filters.video |
-                Filters.document | Filters.location,
-                anketa_fallback)
-        ]
+                Filters.text
+                | Filters.photo
+                | Filters.video
+                | Filters.document
+                | Filters.location,
+                anketa_fallback,
+            )
+        ],
     )
 
     dp.add_handler(anketa)
@@ -77,21 +98,19 @@ def main():
     dp.add_handler(CommandHandler("subscribe", subscribe_user_handler))
     dp.add_handler(CommandHandler("unsubscribe", unsubscribe_user_handler))
     dp.add_handler(CommandHandler("alarm", set_alarm))
+    dp.add_handler(CallbackQueryHandler(flag_picture_rating, pattern="^(rating|)"))
     dp.add_handler(
-        CallbackQueryHandler(flag_picture_rating, pattern="^(rating|)")
-    )
-    dp.add_handler(MessageHandler(Filters.regex(
-        "^(Прислать флаг)$"), send_flag_picture)
+        MessageHandler(Filters.regex("^(Прислать флаг)$"), send_flag_picture)
     )
     dp.add_handler(MessageHandler(Filters.photo, check_user_photo))
     dp.add_handler(MessageHandler(Filters.location, user_coordinates))
     dp.add_handler(MessageHandler(Filters.text, talk_to_me))
 
-    logging.info('Бот стартовал')
+    logging.info("Бот стартовал")
 
     echo_bot.start_polling()
     echo_bot.idle()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
